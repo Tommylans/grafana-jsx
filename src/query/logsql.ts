@@ -11,7 +11,7 @@ export type LogsqlOptions = {
 const QUERY_TYPE = { raw: "instant", range: "statsRange", instant: "stats", hits: "hits" } as const
 
 /** A LogsQL query against a VictoriaLogs datasource. The stream filter goes first:
- * `{kubernetes.pod_namespace="kombu"} error | stats by (_time:1m) count() rows`. */
+ * `{kubernetes.pod_namespace="app"} error | stats by (_time:1m) count() rows`. */
 export const logsql = (
   datasource: Datasource,
   expr: string,
