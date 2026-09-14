@@ -7,6 +7,7 @@ import {
   Histogram,
   h,
   Logs,
+  logsql,
   PieChart,
   prometheus,
   promql,
@@ -18,6 +19,7 @@ import {
   StatusHistory,
   Text,
   valueMap,
+  victorialogs,
 } from "../src/index.ts"
 
 const PROM = prometheus("prometheus")
@@ -72,6 +74,19 @@ describe("the newer panel types", () => {
         options: { up: { index: 0, text: "running", color: "green" }, down: { index: 1, text: "stopped" } },
       },
     ])
+  })
+})
+
+describe("logsql", () => {
+  test("maps the four query kinds to the plugin's queryType", () => {
+    const VL = victorialogs("victorialogs")
+    expect(logsql(VL, '{a="b"}').json).toMatchObject({ queryType: "instant", expr: '{a="b"}', refId: "A" })
+    expect(logsql(VL, "x | stats by (_time:1m) count() rows", { type: "range", ref: "B" }).json).toMatchObject({
+      queryType: "statsRange",
+      refId: "B",
+    })
+    expect(logsql(VL, "x", { type: "hits" }).json.queryType).toBe("hits")
+    expect(logsql(VL, "x", { type: "instant" }).json.queryType).toBe("stats")
   })
 })
 

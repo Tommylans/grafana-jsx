@@ -69,6 +69,7 @@ export { type StateProps, StateTimeline, StatusHistory } from "./panels/state-ti
 export { Table, type TableProps } from "./panels/table.tsx"
 export { Text, type TextProps } from "./panels/text.tsx"
 export { TimeSeries, type TimeSeriesProps } from "./panels/time-series.tsx"
-export { type Datasource, postgres, prometheus, type Target } from "./query/datasource.ts"
+export { type Datasource, postgres, prometheus, type Target, victorialogs } from "./query/datasource.ts"
+export { type LogsqlOptions, logsql } from "./query/logsql.ts"
 export { type PromqlOptions, promql, RATE, refId } from "./query/promql.ts"
 export { type SqlOptions, sql } from "./query/sql.ts"
