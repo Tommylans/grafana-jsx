@@ -1,5 +1,6 @@
 import { rowOf } from "../core/layout.ts"
 import { type Children, type DashboardNode, flatten, type JsonObject, type Node } from "../core/node.ts"
+import { BUILT_IN_ANNOTATIONS } from "../dashboard/annotations.ts"
 
 export type DashboardProps = {
   /** File name the dashboard is written to, e.g. `traffic.json`. */
@@ -14,8 +15,10 @@ export type DashboardProps = {
   refresh?: string
   timezone?: string
   links?: JsonObject[]
-  /** Template variables, in Grafana's own JSON. */
+  /** Template variables: `queryVariable`, `customVariable`, … from this package, or Grafana's own JSON. */
   variables?: JsonObject[]
+  /** Marks on every time panel: `promqlAnnotation(…)`; Grafana's own annotations and alerts are always first. */
+  annotations?: JsonObject[]
   children?: Children
 }
 
@@ -31,6 +34,7 @@ export const Dashboard = ({
   timezone = "browser",
   links = [],
   variables = [],
+  annotations = [],
   children,
 }: DashboardProps): DashboardNode => ({
   kind: "dashboard",
@@ -51,7 +55,7 @@ export const Dashboard = ({
     graphTooltip: 1,
     time: { from, to: "now" },
     templating: { list: variables },
-    annotations: { list: [] },
+    annotations: { list: [BUILT_IN_ANNOTATIONS, ...annotations] },
     links,
     panels,
   }),

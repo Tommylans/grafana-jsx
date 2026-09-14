@@ -10,11 +10,12 @@ export type PanelJson = {
   title: string
   id: number
   gridPos: { h: number; w: number; x: number; y: number }
-  datasource: { type: string; uid: string }
+  /** Absent on a panel without queries (text). */
+  datasource?: { type: string; uid: string }
   interval?: string
   fieldConfig: { defaults: JsonObject; overrides: Json[] }
   options?: JsonObject
-  targets: Json[]
+  targets?: Json[]
   transformations?: Json[]
   description?: string
 }

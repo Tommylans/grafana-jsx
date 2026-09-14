@@ -5,6 +5,29 @@ import type { Datasource, Target } from "../query/datasource.ts"
 
 export type Common = { title: string; description?: string; w?: number; h?: number }
 
+/** One threshold step: `value: null` is the base color below every other step. */
+export type Step = { color: string; value: number | null }
+export const thresholds = (steps: Step[]): JsonObject => ({ mode: "absolute", steps })
+
+/** What a value shows as: a text and/or a color per exact value (`"0": { text: "down", color: "red" }`). */
+export type ValueMap = Record<string, { text?: string; color?: string }>
+/** Grafana's value mappings from a `ValueMap`; ranges and regexes stay hand-written overrides. */
+export const valueMap = (map: ValueMap): JsonObject[] => [
+  {
+    type: "value",
+    options: Object.fromEntries(
+      Object.entries(map).map(([value, { text, color }], index) => [
+        value,
+        { index, ...(text === undefined ? {} : { text }), ...(color === undefined ? {} : { color }) },
+      ]),
+    ),
+  },
+]
+
+export const LEGEND_BOTTOM: JsonObject = { displayMode: "list", placement: "bottom", showLegend: true }
+export const TOOLTIP_SINGLE: JsonObject = { mode: "single", sort: "none" }
+export const LAST: JsonObject = { calcs: ["lastNotNull"], fields: "", values: false }
+
 export type Colors = ReadonlyArray<readonly [string, string]>
 
 /** A fixed color per series name, so a series keeps its color whatever else is on screen. */

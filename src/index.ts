@@ -21,12 +21,29 @@ export { GRID, layout, rowOf } from "./core/layout.ts"
 export type { Children, DashboardNode, Json, JsonObject, Node, PanelJson, PanelNode, RowNode } from "./core/node.ts"
 export { flatten } from "./core/node.ts"
 export { renderDashboard } from "./core/render.ts"
+export { BUILT_IN_ANNOTATIONS, type PromqlAnnotation, promqlAnnotation } from "./dashboard/annotations.ts"
+export { dashboardsByTag, link } from "./dashboard/links.ts"
+export {
+  type CustomVariable,
+  customVariable,
+  datasourceVariable,
+  intervalVariable,
+  type QueryVariable,
+  queryVariable,
+  ref,
+  textboxVariable,
+} from "./dashboard/variables.ts"
 export { h } from "./jsx.ts"
 export { BarChart, type BarChartProps } from "./panels/bar-chart.tsx"
-export { BarGauge, type BarGaugeProps, type Step } from "./panels/bar-gauge.tsx"
+export { BarGauge, type BarGaugeProps } from "./panels/bar-gauge.tsx"
 export { Canvas, type CanvasProps } from "./panels/canvas.tsx"
 export { Dashboard, type DashboardProps, Row } from "./panels/dashboard.tsx"
+export { Gauge, type GaugeProps } from "./panels/gauge.tsx"
+export { Heatmap, type HeatmapProps } from "./panels/heatmap.tsx"
+export { Histogram, type HistogramProps } from "./panels/histogram.tsx"
+export { Logs, type LogsProps } from "./panels/logs.tsx"
 export { NodeGraph, type NodeGraphProps } from "./panels/node-graph.tsx"
+export { PieChart, type PieChartProps } from "./panels/pie-chart.tsx"
 export {
   byName,
   type Colors,
@@ -36,12 +53,21 @@ export {
   datasourceOf,
   described,
   head,
+  LAST,
+  LEGEND_BOTTOM,
   linkTo,
   P50_P90,
   panel,
+  type Step,
+  TOOLTIP_SINGLE,
+  thresholds,
+  type ValueMap,
+  valueMap,
 } from "./panels/shared.ts"
 export { Stat, type StatProps } from "./panels/stat.tsx"
+export { type StateProps, StateTimeline, StatusHistory } from "./panels/state-timeline.tsx"
 export { Table, type TableProps } from "./panels/table.tsx"
+export { Text, type TextProps } from "./panels/text.tsx"
 export { TimeSeries, type TimeSeriesProps } from "./panels/time-series.tsx"
 export { type Datasource, postgres, prometheus, type Target } from "./query/datasource.ts"
 export { type PromqlOptions, promql, RATE, refId } from "./query/promql.ts"

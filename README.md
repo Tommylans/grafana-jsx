@@ -44,11 +44,17 @@ component claims (add hand-written ones to `keep`).
   Children stack top to bottom; **`<Row>`** puts panels side by side on their own `w`. The grid is 24
   wide; a wider row is a build error. `y` and the panel ids follow the reading order, so an id is a
   place rather than a name.
-- **Panels** — `<Stat>`, `<TimeSeries>` (lines or bars, stacked, `step` for series that only get a point
-  when something changes, `repeat` per variable), `<BarChart>`, `<Table>` (`col` for column
-  formatting, `sort`, `transformations`), `<BarGauge>`, `<NodeGraph>`, `<Canvas>`. Each panel type's
-  JSON lives in one file under `src/panels/`; a new panel type is a new file that returns a `PanelNode`
-  through the exported `panel()` helper.
+- **Panels** — `<Stat>`, `<Gauge>`, `<BarGauge>`, `<TimeSeries>` (lines or bars, stacked, `step`
+  for series that only get a point when something changes, `repeat` per variable), `<BarChart>`,
+  `<Histogram>`, `<PieChart>`, `<Heatmap>`, `<StateTimeline>` and `<StatusHistory>` (a lane per
+  series, `values` maps a value to a text and a color), `<Logs>`, `<Table>` (`col` for column
+  formatting, `sort`, `transformations`), `<Text>` (markdown as children), `<NodeGraph>`, `<Canvas>`.
+  Each panel type's JSON lives in one file under `src/panels/`; a new panel type is a new file that
+  returns a `PanelNode` through the exported `panel()` helper. `thresholds`, `valueMap`, `byName`
+  and `col` are the small shared pieces of field config.
+- **Dashboard-level** — `queryVariable`, `customVariable`, `intervalVariable`, `textboxVariable` and
+  `datasourceVariable` build the template variables (`ref("name")` is `$name` for a query);
+  `promqlAnnotation` marks moments on every time panel; `dashboardsByTag` and `link` fill the header.
 - **Queries** — `sql(datasource, text, { format })` for PostgreSQL, `promql(datasource, expr, {
   legend, instant, format })` for Prometheus-compatible sources (`prometheus(uid)`, `postgres(uid)`
   name them). A target carries its datasource; one panel has one datasource, mixing is an error.

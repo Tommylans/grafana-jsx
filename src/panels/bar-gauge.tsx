@@ -1,8 +1,8 @@
 import type { JsonObject, Node } from "../core/node.ts"
 import type { Target } from "../query/datasource.ts"
-import { type Common, described, head, panel } from "./shared.ts"
+import { type Common, described, head, panel, type Step, thresholds } from "./shared.ts"
 
-export type Step = { color: string; value: number | null }
+export type { Step }
 export type BarGaugeProps = Common & {
   query: Target
   unit: string
@@ -24,20 +24,19 @@ export const BarGauge = ({
   unit,
   min = 0,
   max,
-  thresholds,
+  thresholds: steps,
   color,
   nameOnTop = false,
 }: BarGaugeProps): Node =>
   panel(w, h, (id, x, y) => {
-    if (thresholds && color)
-      throw new Error(`${title}: choose thresholds or color, a fixed color disables the thresholds`)
-    const steps = thresholds ?? [{ color: color ?? "blue", value: null }]
+    if (steps && color) throw new Error(`${title}: choose thresholds or color, a fixed color disables the thresholds`)
+    const stepsOrColor = steps ?? [{ color: color ?? "blue", value: null }]
     const defaults: JsonObject = {
       unit,
       min,
       ...(max === undefined ? {} : { max }),
       color: color ? { mode: "fixed", fixedColor: color } : { mode: "thresholds" },
-      thresholds: { mode: "absolute", steps },
+      thresholds: thresholds(stepsOrColor),
     }
     return described(
       {
