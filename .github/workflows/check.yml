@@ -1,0 +1,17 @@
+name: check
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 checkout
+        uses: actions/checkout@v5
+      - name: 🧰 bun
+        uses: oven-sh/setup-bun@v2
+      - name: 📦 install
+        run: bun install --frozen-lockfile
+      - name: 🧪 biome, typecheck, tests
+        run: bun run check
