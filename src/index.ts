@@ -22,7 +22,7 @@ export type { Children, DashboardNode, Json, JsonObject, Node, PanelJson, PanelN
 export { flatten } from "./core/node.ts"
 export { renderDashboard } from "./core/render.ts"
 export { BUILT_IN_ANNOTATIONS, type PromqlAnnotation, promqlAnnotation } from "./dashboard/annotations.ts"
-export { dashboardsByTag, link } from "./dashboard/links.ts"
+export { dashboardsByTag, type LinkOptions, link } from "./dashboard/links.ts"
 export {
   type CustomVariable,
   customVariable,
