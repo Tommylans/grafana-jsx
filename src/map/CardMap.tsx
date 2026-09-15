@@ -20,6 +20,9 @@ export type CardMapProps<N extends string> = Omit<Common, "h"> &
     /** Rows on the dashboard grid; unset fits the layout. */
     h?: number
     panZoom?: boolean
+    /** Where the layout's top-left corner lands on the canvas; a narrow screen wants a smaller margin. */
+    left?: number
+    top?: number
     /** One `<YStack>` or `<XStack>` holding every card. */
     children?: Children
   }
@@ -45,6 +48,8 @@ export function CardMap<N extends string>({
   palette,
   maxLineWidth,
   panZoom = true,
+  left = 20,
+  top = 20,
   children,
 }: CardMapProps<N>): Node {
   const trees = flatten(children)
@@ -57,7 +62,7 @@ export function CardMap<N extends string>({
     ...(labelHeight === undefined ? {} : { labelHeight }),
     ...(cardHeight === undefined ? {} : { cardHeight }),
   }
-  const laid = layoutMap(tree, layoutOptions)
+  const laid = layoutMap(tree, layoutOptions, left, top)
   const placed = placeCards(cards, laid)
   const mapOptions: MapOptions = {
     ...(cardWidth === undefined ? {} : { cardWidth }),
@@ -69,7 +74,7 @@ export function CardMap<N extends string>({
     title,
     ...(description === undefined ? {} : { description }),
     w,
-    h: h ?? rowsFor(laid.height + 20),
+    h: h ?? rowsFor(laid.height + top),
     queries,
     elements,
     fieldConfig,

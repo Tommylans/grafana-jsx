@@ -327,8 +327,8 @@ export function drawMap<N extends string>(
       ),
       connections: connectionsOf.get(card.name) ?? [],
     })
-    // The metrics rows: two slots per row across the card, each a short label (four characters) and a
-    // value; the slot grows with the card width, so wide cards fit `275 kB/s`.
+    // The metrics rows: two slots per row across the card, each a short label (four characters, 26 px)
+    // and a value; the slot grows with the card width, so a 150 px card fits `1 MB/s` and a wide one `275 kB/s`.
     cardElements.push({
       type: "icon",
       name: `icon-${card.name}`,
@@ -337,15 +337,15 @@ export function drawMap<N extends string>(
     })
     cardElements.push(text(`title-${card.name}`, card.left + 46, card.top + 7, W - 60, 20, card.title, 13, ink.title))
     cardElements.push(text(`sub-${card.name}`, card.left + 46, card.top + 27, W - 52, 18, card.sub, 10, ink.muted))
-    const slot = (W - 20) / 2
+    const slot = (W - 16) / 2
     ;(card.metrics ?? []).slice(0, 4).forEach((metric, k) => {
-      const x = card.left + 10 + (k % 2) * slot
+      const x = card.left + 8 + (k % 2) * slot
       const y = card.top + CARD_H + 2 + Math.floor(k / 2) * METRIC_ROW
-      cardElements.push(text(`metric-label-${card.name}-${k}`, x, y, 28, 16, metric.label, 10, ink.label))
+      cardElements.push(text(`metric-label-${card.name}-${k}`, x, y, 26, 16, metric.label, 10, ink.label))
       cardElements.push({
         type: "metric-value",
         name: `metric-${card.name}-${k}`,
-        ...place(x + 30, y, slot - 30, 16),
+        ...place(x + 27, y, slot - 27, 16),
         config: {
           text: { field: metric.series, mode: "field" },
           size: 11,
