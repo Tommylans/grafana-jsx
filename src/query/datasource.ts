@@ -10,5 +10,7 @@ export type Target = { datasource: Datasource; json: Record<string, Json> }
 export const prometheus = (uid: string): Datasource => ({ type: "prometheus", uid })
 /** A PostgreSQL datasource by uid. */
 export const postgres = (uid: string): Datasource => ({ type: "grafana-postgresql-datasource", uid })
+/** A Loki datasource by uid. */
+export const loki = (uid: string): Datasource => ({ type: "loki", uid })
 /** A VictoriaLogs datasource (plugin `victoriametrics-logs-datasource`) by uid. */
 export const victorialogs = (uid: string): Datasource => ({ type: "victoriametrics-logs-datasource", uid })

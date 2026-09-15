@@ -8,7 +8,10 @@ import {
   Histogram,
   h,
   Logs,
+  labelValues,
+  logql,
   logsql,
+  loki,
   PieChart,
   prometheus,
   promql,
@@ -168,5 +171,33 @@ describe("variables, annotations and links", () => {
     )
     const list = (json.annotations as { list: Array<{ name: string }> }).list
     expect(list.map((a) => a.name)).toEqual(["Annotations & Alerts", "deploys"])
+  })
+})
+
+describe("logql", () => {
+  test("a Loki target carries the query type and the optional legend, line limit and step", () => {
+    const LOKI = loki("loki")
+    expect(logql(LOKI, '{namespace="app"}', { limit: 500 }).json).toEqual({
+      refId: "A",
+      datasource: { type: "loki", uid: "loki" },
+      expr: '{namespace="app"}',
+      queryType: "range",
+      editorMode: "code",
+      maxLines: 500,
+    })
+    expect(
+      logql(LOKI, 'sum(count_over_time({a="b"}[1m]))', { type: "instant", legend: "{{pod}}", step: "1m", ref: "B" })
+        .json,
+    ).toMatchObject({
+      refId: "B",
+      queryType: "instant",
+      legendFormat: "{{pod}}",
+      step: "1m",
+    })
+  })
+  test("a variable on Loki is the plugin's label-values query object", () => {
+    const v = queryVariable({ name: "ns", datasource: loki("loki"), query: labelValues("namespace") })
+    expect(v.query).toEqual({ refId: "LokiVariableQueryEditor-VariableQuery", type: 1, label: "namespace" })
+    expect(labelValues("pod", '{namespace="$ns"}')).toMatchObject({ label: "pod", stream: '{namespace="$ns"}' })
   })
 })
