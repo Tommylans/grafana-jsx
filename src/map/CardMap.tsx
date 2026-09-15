@@ -8,7 +8,7 @@ import type { Target } from "../query/datasource.ts"
 import { type Bar, drawMap, type Line, type MapOptions } from "./drawMap.ts"
 import { type CardSpec, type LayoutOptions, layoutMap, placeCards } from "./layoutMap.ts"
 
-export type MapProps<N extends string> = Omit<Common, "h"> &
+export type CardMapProps<N extends string> = Omit<Common, "h"> &
   MapOptions &
   Omit<LayoutOptions, "cardWidth"> & {
     /** The cards by name; the layout (children) says where they sit, the lines what joins them. */
@@ -27,7 +27,7 @@ export type MapProps<N extends string> = Omit<Common, "h"> &
 /** Grafana draws a row as 30 px plus an 8 px gutter, and the panel keeps ~40 px for its chrome. */
 const rowsFor = (px: number) => Math.ceil((px + 40) / 38)
 
-export function Map<N extends string>({
+export function CardMap<N extends string>({
   title,
   description,
   w = 24,
@@ -46,7 +46,7 @@ export function Map<N extends string>({
   maxLineWidth,
   panZoom = true,
   children,
-}: MapProps<N>): Node {
+}: CardMapProps<N>): Node {
   const trees = flatten(children)
   const tree = trees[0]
   if (trees.length !== 1 || !tree || tree.kind !== "stack") throw new Error(`${title}: a map holds exactly one stack`)

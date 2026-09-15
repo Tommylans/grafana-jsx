@@ -2,15 +2,16 @@ import { describe, expect, test } from "bun:test"
 import {
   CARD_H,
   CARD_W,
+  CardMap,
   type CardSpec,
   Dashboard,
   h,
   layoutMap,
-  Map,
   placeCards,
   prometheus,
   promql,
   renderDashboard,
+  Spacer,
   trafficFieldConfig,
   XStack,
   YStack,
@@ -48,6 +49,30 @@ describe("stacks in JSX", () => {
     ])
   })
 
+  test("a Spacer takes room along the axis without a card, so a row can be pushed past the one below", () => {
+    const laid = layoutMap(
+      <YStack gap={10} align="center">
+        <XStack gap={10}>
+          <Spacer size={CARD_W} />
+          {a}
+        </XStack>
+        <XStack gap={10}>
+          {b}
+          {c}
+        </XStack>
+      </YStack>,
+      {},
+      0,
+      0,
+    )
+    const placed = placeCards(CARDS, laid)
+    expect(placed.map((card) => [card.name, card.left, card.top])).toEqual([
+      ["a", CARD_W + 10, 0],
+      ["b", 0, CARD_H + 10],
+      ["c", CARD_W + 10, CARD_H + 10],
+    ])
+  })
+
   test("a panel in a stack, or a stack in a dashboard, is an error", () => {
     expect(() => placeCards([{ ...a, name: "zz" }], layoutMap(<XStack>{a}</XStack>, {}, 0, 0))).toThrow(
       /not in the layout/,
@@ -55,11 +80,11 @@ describe("stacks in JSX", () => {
   })
 })
 
-describe("<Map>", () => {
+describe("<CardMap>", () => {
   test("lays out its stack, places the cards and renders a canvas whose height fits", () => {
     const { json } = renderDashboard(
       <Dashboard file="m.json" title="M" uid="m">
-        <Map
+        <CardMap
           title="map"
           cards={CARDS}
           lines={[{ from: { card: "a", side: "right" }, to: { card: "b", side: "left" }, series: "s" }]}
@@ -74,7 +99,7 @@ describe("<Map>", () => {
             </XStack>
             <XStack>{c}</XStack>
           </YStack>
-        </Map>
+        </CardMap>
       </Dashboard>,
     )
     const panels = json.panels
@@ -89,7 +114,7 @@ describe("<Map>", () => {
     expect(() =>
       renderDashboard(
         <Dashboard file="m.json" title="M" uid="m">
-          <Map
+          <CardMap
             title="map"
             cards={CARDS}
             lines={[]}
@@ -98,7 +123,7 @@ describe("<Map>", () => {
           >
             <XStack>{a}</XStack>
             <XStack>{b}</XStack>
-          </Map>
+          </CardMap>
         </Dashboard>,
       ),
     ).toThrow(/exactly one stack/)

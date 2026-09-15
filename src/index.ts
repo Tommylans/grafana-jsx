@@ -30,6 +30,7 @@ export {
   textboxVariable,
 } from "./dashboard/variables.ts"
 export { h } from "./jsx.ts"
+export { CardMap, type CardMapProps } from "./map/CardMap.tsx"
 export {
   type Bar,
   CARD_H,
@@ -59,9 +60,8 @@ export {
   layoutMap,
   placeCards,
 } from "./map/layoutMap.ts"
-export { Map, type MapProps } from "./map/Map.tsx"
 export { OUT, type Point, route, type Segment, type Side } from "./map/route.ts"
-export { type StackProps, XStack, YStack } from "./map/Stack.tsx"
+export { Spacer, type StackProps, XStack, YStack } from "./map/Stack.tsx"
 export { BarChart, type BarChartProps } from "./panels/BarChart.tsx"
 export { BarGauge, type BarGaugeProps } from "./panels/BarGauge.tsx"
 export { Canvas, type CanvasProps } from "./panels/Canvas.tsx"

@@ -41,7 +41,8 @@ export const Dashboard = ({
   file,
   children: flatten(children).map((node) => {
     if (node.kind === "dashboard") throw new Error("a dashboard inside a dashboard")
-    if (node.kind === "stack") throw new Error("a stack belongs in layoutMap, not in a dashboard")
+    if (node.kind === "stack" || node.kind === "space")
+      throw new Error("a stack belongs in layoutMap, not in a dashboard")
     return node
   }),
   render: (panels) => ({

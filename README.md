@@ -67,18 +67,19 @@ component claims (add hand-written ones to `keep`).
   (`groupAround(label, cards)` computes the box), and lines that run straight, as an L or as a Z
   between the cards with the value next to them. Cards that overlap, a value that lands on a card
   and a line through a card it does not join are build errors, not surprises on screen.
-- **`<Map>`** — the map as one component: `cards` (a typed list of `CardSpec`), `lines` between them,
+- **`<CardMap>`** — the map as one component: `cards` (a typed list of `CardSpec`), `lines` between them,
   and a `<YStack>`/`<XStack>` tree as children saying what sits next to what (`gap`, `label` makes a
-  group, `justify`, `align`). The layout places the cards, the panel height fits the result, and the
+  group, `justify`, `align`; `<Spacer size>` is empty room along the axis, to push a card right above
+  the one it is wired to). The layout places the cards, the panel height fits the result, and the
   `drawMap` checks run on it. Underneath: `layoutMap`, `placeCards`, `drawMap`.
 
 ```tsx
-<Map title="" cards={CARDS} lines={LINES} queries={queries} fieldConfig={trafficFieldConfig(10_000_000)} cardWidth={190} gap={100}>
+<CardMap title="" cards={CARDS} lines={LINES} queries={queries} fieldConfig={trafficFieldConfig(10_000_000)} cardWidth={190} gap={100}>
   <YStack gap={120}>
     <XStack label="Network">{[internet, router, core]}</XStack>
     <XStack label="Rack" justify="center">{[node1, node2, node3]}</XStack>
   </YStack>
-</Map>
+</CardMap>
 ``` Card names are a union type, so a line to an unknown card
   fails at typecheck time. `trafficFieldConfig(max)` colors lines by rate and dots by `up:*`.
 - **Build** — `buildDashboards(dashboards, { outDir, check, kubernetes, keep })`. With `kubernetes`,
@@ -137,6 +138,6 @@ seconds; in a JSX attribute `"a\\b"` is literally two backslashes.
 | `src/core/` | nodes, the 24-column grid, rendering a dashboard to JSON |
 | `src/dashboard/` | `<Dashboard>`, `<Row>`, variables, annotations, links |
 | `src/panels/` | one component per panel type, `fieldConfig.ts` for the shared pieces |
-| `src/map/` | `<Map>`, `<XStack>`/`<YStack>`, the layout engine, the router and the drawing |
+| `src/map/` | `<CardMap>`, `<XStack>`/`<YStack>`, the layout engine, the router and the drawing |
 | `src/query/` | datasources and the `sql`/`promql`/`logsql` targets |
 | `src/build/` | `buildDashboards`, ConfigMaps for the Grafana sidecar |

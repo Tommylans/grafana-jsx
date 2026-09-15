@@ -7,7 +7,7 @@ export const GRID = 24
 /** Wraps children into a row, refusing anything that is not a panel and any row wider than the grid. */
 export const rowOf = (children: Children): RowNode => {
   const panels = flatten(children).map((node) => {
-    if (node.kind === "stack") throw new Error("a stack belongs in layoutMap, not in a row")
+    if (node.kind === "stack" || node.kind === "space") throw new Error("a stack belongs in layoutMap, not in a row")
     if (node.kind !== "panel") throw new Error("a row holds panels only")
     return node
   })

@@ -9,6 +9,7 @@ import { CARD_W, type Card, cardHeightOf, type Group } from "./drawMap.ts"
 export type CardSpec<N extends string = string> = Omit<Card<N>, "left" | "top">
 export type Box<N extends string = string> =
   | CardSpec<N>
+  | { kind: "space"; size: number }
   | {
       dir: "row" | "col"
       children: ReadonlyArray<Box<N>>
@@ -34,6 +35,7 @@ export type LayoutOptions = {
 }
 
 const isCard = <N extends string>(box: Box<N>): box is CardSpec<N> => "name" in box
+const isSpace = <N extends string>(box: Box<N>): box is { kind: "space"; size: number } => "kind" in box
 
 type Size = { w: number; h: number }
 
@@ -44,7 +46,9 @@ const boxOf = (node: Node): Box<string> => {
   if (node.kind !== "stack") throw new Error(`layoutMap takes a stack, not a ${node.kind}`)
   return {
     dir: node.dir,
-    children: node.children.map((child): Box<string> => ("kind" in child ? boxOf(child) : child)),
+    children: node.children.map(
+      (child): Box<string> => ("kind" in child && child.kind === "stack" ? boxOf(child) : child),
+    ),
     ...(node.gap === undefined ? {} : { gap: node.gap }),
     ...(node.label === undefined ? {} : { label: node.label }),
     ...(node.justify === undefined ? {} : { justify: node.justify }),
@@ -65,11 +69,14 @@ export function layoutMap(tree: Node | Box<string>, options: LayoutOptions = {},
 
   const measure = (box: Box<string>): Size => {
     if (isCard(box)) return { w: cardWidth, h: cardHeight }
+    if (isSpace(box)) return { w: box.size, h: box.size }
     const sizes = box.children.map(measure)
+    // A spacer only counts along the axis; across it, it takes no room.
+    const solid = box.children.flatMap((child, i) => (isSpace(child) ? [] : [sizes[i] ?? { w: 0, h: 0 }]))
     const gap = box.gap ?? gapDefault
     const gaps = Math.max(0, sizes.length - 1) * gap
     const main = sizes.reduce((sum, s) => sum + (box.dir === "row" ? s.w : s.h), 0) + gaps
-    const cross = Math.max(0, ...sizes.map((s) => (box.dir === "row" ? s.h : s.w)))
+    const cross = Math.max(0, ...solid.map((s) => (box.dir === "row" ? s.h : s.w)))
     const w = box.dir === "row" ? main : cross
     const h = box.dir === "row" ? cross : main
     return box.label ? { w: w + 2 * pad, h: h + labelHeight + pad } : { w, h }
@@ -81,6 +88,7 @@ export function layoutMap(tree: Node | Box<string>, options: LayoutOptions = {},
       out.cards.push({ ...box, left: x, top: y })
       return
     }
+    if (isSpace(box)) return
     if (box.label) out.groups.push({ left: x, top: y, width: w, height: h, label: box.label })
     const inner = box.label
       ? { x: x + pad, y: y + labelHeight, w: w - 2 * pad, h: h - labelHeight - pad }
@@ -112,7 +120,7 @@ export function layoutMap(tree: Node | Box<string>, options: LayoutOptions = {},
 }
 
 const collectCards = <N extends string>(box: Box<N>): CardSpec<N>[] =>
-  isCard(box) ? [box] : box.children.flatMap(collectCards)
+  isCard(box) ? [box] : isSpace(box) ? [] : box.children.flatMap(collectCards)
 
 /** A row of boxes. */
 export const flexRow = <N extends string>(

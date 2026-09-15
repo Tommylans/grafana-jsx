@@ -52,17 +52,20 @@ export type MapCardSpec = {
 
 /** A box on a map (`<XStack>`, `<YStack>`): its children are stacks or map cards, and it only ever
  * meets `layoutMap`, never a dashboard. */
+/** Empty room of a fixed size along a stack's main axis, like a card that is not drawn. */
+export type SpaceNode = { kind: "space"; size: number }
+
 export type StackNode = {
   kind: "stack"
   dir: "row" | "col"
-  children: ReadonlyArray<StackNode | (MapCardSpec & { name: string })>
+  children: ReadonlyArray<StackNode | SpaceNode | (MapCardSpec & { name: string })>
   gap?: number
   label?: string
   justify?: "start" | "center" | "end"
   align?: "start" | "center" | "end" | "stretch"
 }
 
-export type Node = PanelNode | RowNode | DashboardNode | StackNode
+export type Node = PanelNode | RowNode | DashboardNode | StackNode | SpaceNode
 
 /** What a component accepts as children: nodes, nested arrays of them, and the usual falsy values. */
 export type Children = Node | Children[] | null | undefined | false
