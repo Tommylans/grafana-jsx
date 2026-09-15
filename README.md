@@ -63,7 +63,11 @@ component claims (add hand-written ones to `keep`).
   icon, a status dot, a corner `value` or up to four `metrics` in rows of two, groups per place
   (`groupAround(label, cards)` computes the box), and lines that run straight, as an L or as a Z
   between the cards with the value next to them. Cards that overlap, a value that lands on a card
-  and a line through a card it does not join are build errors, not surprises on screen. Card names are a union type, so a line to an unknown card
+  and a line through a card it does not join are build errors, not surprises on screen.
+- **Map layout** — `<YStack>` and `<XStack>` (gap, `label` for a group, `justify`, `align`) hold the
+  cards; `layoutMap(tree, { cardWidth, gap, pad })` measures and places them, `placeCards(cards, laid)`
+  hands the declared cards back with their places and their union-typed names. Positions are never
+  written by hand. Card names are a union type, so a line to an unknown card
   fails at typecheck time. `trafficFieldConfig(max)` colors lines by rate and dots by `up:*`.
 - **Build** — `buildDashboards(dashboards, { outDir, check, kubernetes, keep })`. With `kubernetes`,
   every dashboard also gets a ConfigMap (label `grafana_dashboard: "1"`, folder as annotation

@@ -35,7 +35,34 @@ export type DashboardNode = {
   children: (PanelNode | RowNode)[]
   render: (panels: PanelJson[]) => JsonObject
 }
-export type Node = PanelNode | RowNode | DashboardNode
+/** What a card on a map says about itself, apart from its name and its place. */
+export type MapCardSpec = {
+  title: string
+  sub: string
+  /** Icon path as Grafana resolves it, e.g. `img/icons/unicons/server.svg`. */
+  icon: string
+  /** Series name whose last value colors the status dot (0 red, 1 green), or null for no dot. */
+  up: string | null
+  /** Series name whose last value is printed in the card's bottom-right corner (a load, a rate). */
+  value?: string
+  /** Up to four labelled values in rows of two (`cpu 24%`, `mem 63%`); labels of at most four characters.
+   * The card with the most metrics sets the height of every card on the map. */
+  metrics?: ReadonlyArray<{ label: string; series: string }>
+}
+
+/** A box on a map (`<XStack>`, `<YStack>`): its children are stacks or map cards, and it only ever
+ * meets `layoutMap`, never a dashboard. */
+export type StackNode = {
+  kind: "stack"
+  dir: "row" | "col"
+  children: ReadonlyArray<StackNode | (MapCardSpec & { name: string })>
+  gap?: number
+  label?: string
+  justify?: "start" | "center" | "end"
+  align?: "start" | "center" | "end" | "stretch"
+}
+
+export type Node = PanelNode | RowNode | DashboardNode | StackNode
 
 /** What a component accepts as children: nodes, nested arrays of them, and the usual falsy values. */
 export type Children = Node | Children[] | null | undefined | false

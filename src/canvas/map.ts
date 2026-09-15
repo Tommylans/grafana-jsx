@@ -3,7 +3,7 @@
 // pixels on a grid Canvas does not scale. A line is a chain of Canvas `connections` between the
 // card, invisible knots and the other card. Measured on Grafana 13: connections are drawn in an SVG
 // above all elements, and no element can be smaller than 10 px, so the value sits next to the line.
-import type { Json, JsonObject, PanelJson } from "../core/node.ts"
+import type { Json, JsonObject, MapCardSpec, PanelJson } from "../core/node.ts"
 import { length, type Point, route, type Segment, type Side } from "./route.ts"
 
 /** Default card width; a map may choose another (`cardWidth`), wider cards fit longer values. */
@@ -14,24 +14,9 @@ export const METRIC_ROW = 22
 /** @deprecated the height of a card with one metrics row; use `cardHeightOf`. */
 export const CARD_H_METRICS = CARD_H + METRIC_ROW
 
-export type Card<N extends string = string> = {
-  name: N
-  left: number
-  top: number
-  title: string
-  sub: string
-  /** Icon path as Grafana resolves it, e.g. `img/icons/unicons/server.svg`. */
-  icon: string
-  /** Series name whose last value colors the status dot (0 red, 1 green), or null for no dot. */
-  up: string | null
-  /** Series name whose last value is printed in the card's bottom-right corner (a load, a rate). */
-  value?: string
-  /** Up to four labelled values in rows of two (`cpu 24%`, `mem 63%`); labels of at most four characters.
-   * The card with the most metrics sets the height of every card on the map. */
-  metrics?: ReadonlyArray<{ label: string; series: string }>
-}
+export type Card<N extends string = string> = MapCardSpec & { name: N; left: number; top: number }
 /** How tall the cards of a map are: a row of 22 px per two metrics on the fullest card. */
-export const cardHeightOf = (cards: ReadonlyArray<Card<string>>): number =>
+export const cardHeightOf = (cards: ReadonlyArray<Pick<Card<string>, "name" | "metrics">>): number =>
   CARD_H + METRIC_ROW * Math.ceil(Math.max(0, ...cards.map((card) => card.metrics?.length ?? 0)) / 2)
 
 /** The box around a set of cards: `pad` on three sides and room for the label on top. */

@@ -3,6 +3,17 @@
 export { type BuildOptions, buildDashboards } from "./build/build.ts"
 export { configMap, configMapName, type Kubernetes } from "./build/kubernetes.ts"
 export {
+  type Box,
+  type CardSpec,
+  flexCol,
+  flexGrid,
+  flexRow,
+  type Laid,
+  type LayoutOptions,
+  layoutMap,
+  placeCards,
+} from "./canvas/layout.ts"
+export {
   type Bar,
   CARD_H,
   CARD_H_METRICS,
@@ -21,8 +32,19 @@ export {
   trafficFieldConfig,
 } from "./canvas/map.ts"
 export { OUT, type Point, route, type Segment, type Side } from "./canvas/route.ts"
+export { type StackProps, XStack, YStack } from "./canvas/stack.tsx"
 export { GRID, layout, rowOf } from "./core/layout.ts"
-export type { Children, DashboardNode, Json, JsonObject, Node, PanelJson, PanelNode, RowNode } from "./core/node.ts"
+export type {
+  Children,
+  DashboardNode,
+  Json,
+  JsonObject,
+  Node,
+  PanelJson,
+  PanelNode,
+  RowNode,
+  StackNode,
+} from "./core/node.ts"
 export { flatten } from "./core/node.ts"
 export { renderDashboard } from "./core/render.ts"
 export { BUILT_IN_ANNOTATIONS, type PromqlAnnotation, promqlAnnotation } from "./dashboard/annotations.ts"
