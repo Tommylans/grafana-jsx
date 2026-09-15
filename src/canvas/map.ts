@@ -331,11 +331,11 @@ export function drawMap<N extends string>(
     // `212 B/s`; a longer label is cut, so keep them to `cpu`, `mem`, `req`, `q/s`.
     ;(card.metrics ?? []).slice(0, 2).forEach((metric, k) => {
       const x = card.left + 10 + k * 70
-      cardElements.push(text(`metric-label-${card.name}-${k}`, x, card.top + 54, 24, 16, metric.label, 10, ink.label))
+      cardElements.push(text(`metric-label-${card.name}-${k}`, x, card.top + 54, 28, 16, metric.label, 10, ink.label))
       cardElements.push({
         type: "metric-value",
         name: `metric-${card.name}-${k}`,
-        ...place(x + 24, card.top + 54, 46, 16),
+        ...place(x + 30, card.top + 54, 40, 16),
         config: {
           text: { field: metric.series, mode: "field" },
           size: 11,
