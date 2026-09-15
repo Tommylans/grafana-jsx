@@ -67,8 +67,9 @@ component claims (add hand-written ones to `keep`).
   `promqlAnnotation` marks moments on every time panel; `dashboardsByTag` and `link` fill the header.
 - **Queries** — `sql(datasource, text, { format })` for PostgreSQL, `promql(datasource, expr, {
   legend, instant, format })` for Prometheus-compatible sources, `logsql(datasource, expr, { type })`
-  for VictoriaLogs (`raw` lines for `<Logs>`, `range`/`hits` for time panels, `fields` to group hits, `fieldValues(field)` as a variable query); `prometheus(uid)`,
-  `postgres(uid)` and `victorialogs(uid)` name the sources. PromQL that dashboards write over and over
+  for VictoriaLogs (`raw` lines for `<Logs>`, `range`/`hits` for time panels, `fields` to group hits, `fieldValues(field)` as a variable query),
+  `logql(datasource, expr, { type, legend, limit, step })` for Loki (`labelValues(label, stream)` as a variable query); `prometheus(uid)`,
+  `postgres(uid)`, `loki(uid)` and `victorialogs(uid)` name the sources. PromQL that dashboards write over and over
   has a small builder: `metric("container_cpu_usage_seconds_total").where({ node: "a" }).rate("5m").sumBy("node")`,
   arithmetic with `.over(other, ["node"])`, `.gtBool(0).orVector(0)`; `promql()` takes it directly and
   `raw("…")` is the escape hatch. A target carries its datasource; one panel has one datasource, mixing is an error.
