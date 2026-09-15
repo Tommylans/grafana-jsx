@@ -18,6 +18,7 @@ export type BarGaugeProps = Common & {
 export const BarGauge = ({
   title,
   description,
+  display,
   w = 12,
   h = 9,
   query,
@@ -54,5 +55,6 @@ export const BarGauge = ({
         targets: [query.json],
       },
       description,
+      display,
     )
   })

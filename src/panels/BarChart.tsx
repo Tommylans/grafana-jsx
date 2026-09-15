@@ -14,6 +14,7 @@ export type BarChartProps = Common & {
 export const BarChart = ({
   title,
   description,
+  display,
   w = 8,
   h = 8,
   query,
@@ -46,5 +47,6 @@ export const BarChart = ({
         targets: [query.json],
       },
       description,
+      display,
     ),
   )

@@ -14,6 +14,7 @@ export type CanvasProps = Common & {
 export const Canvas = ({
   title,
   description,
+  display,
   w = 24,
   h = 13,
   queries,
@@ -42,5 +43,6 @@ export const Canvas = ({
         targets: queries.map((query) => query.json),
       },
       description,
+      display,
     ),
   )

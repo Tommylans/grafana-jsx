@@ -3,7 +3,15 @@
 import type { Json, JsonObject, PanelJson, PanelNode } from "../core/node.ts"
 import type { Datasource, Target } from "../query/datasource.ts"
 
-export type Common = { title: string; description?: string; w?: number; h?: number }
+export type Common = {
+  title: string
+  description?: string
+  w?: number
+  h?: number
+  /** The name every series shows as, Grafana's `displayName` template: `${__field.labels.pod}` names a
+   * series after a label, which is how a series gets its name when a datasource ignores `legendFormat`. */
+  display?: string
+}
 
 /** One threshold step: `value: null` is the base color below every other step. */
 export type Step = { color: string; value: number | null }
@@ -109,6 +117,12 @@ export const head = (
   datasource,
 })
 
-/** Sets `description` only when there is one, keeping the JSON free of empty keys. */
-export const described = (json: PanelJson, description: string | undefined): PanelJson =>
-  description ? { ...json, description } : json
+/** Sets `description` and the series `display` name only when there is one, keeping the JSON free of empty keys. */
+export const described = (json: PanelJson, description: string | undefined, display?: string): PanelJson => {
+  const out = description ? { ...json, description } : json
+  if (display === undefined) return out
+  return {
+    ...out,
+    fieldConfig: { ...out.fieldConfig, defaults: { ...out.fieldConfig.defaults, displayName: display } },
+  }
+}

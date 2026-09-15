@@ -6,6 +6,7 @@ import { type StateProps, stateDefaults } from "./StateTimeline.tsx"
 export const StatusHistory = ({
   title,
   description,
+  display,
   w = 24,
   h = 8,
   queries,
@@ -24,5 +25,6 @@ export const StatusHistory = ({
         targets: queries.map((query) => query.json),
       },
       description,
+      display,
     ),
   )

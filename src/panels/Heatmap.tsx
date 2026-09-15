@@ -22,6 +22,7 @@ export type HeatmapProps = Common & {
 export const Heatmap = ({
   title,
   description,
+  display,
   w = 12,
   h = 8,
   queries,
@@ -66,5 +67,6 @@ export const Heatmap = ({
         targets: queries.map((query) => query.json),
       },
       description,
+      display,
     ),
   )

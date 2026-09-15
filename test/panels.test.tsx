@@ -68,6 +68,22 @@ describe("the newer panel types", () => {
     expect(text?.datasource).toBeUndefined()
   })
 
+  test("`display` names every series through fieldConfig.defaults.displayName", () => {
+    const [gauge] = panelsOf(
+      <Dashboard file="d.json" title="d" uid="d">
+        <Gauge
+          title="g"
+          query={up}
+          unit="short"
+          max={1}
+          thresholds={[{ color: "green", value: null }]}
+          display="${__field.labels.pod}"
+        />
+      </Dashboard>,
+    )
+    expect(gauge?.fieldConfig).toMatchObject({ defaults: { displayName: "${__field.labels.pod}", unit: "short" } })
+  })
+
   test("value mappings number the entries in the order JavaScript keeps them", () => {
     expect(valueMap({ up: { text: "running", color: "green" }, down: { text: "stopped" } })).toEqual([
       {

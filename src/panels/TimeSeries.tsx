@@ -26,6 +26,7 @@ export type TimeSeriesProps = Common & {
 export const TimeSeries = ({
   title,
   description,
+  display,
   w = 12,
   h = 8,
   queries,
@@ -71,6 +72,7 @@ export const TimeSeries = ({
         targets: queries.map((query) => query.json),
       },
       description,
+      display,
     )
     return repeat ? { ...json, repeat, repeatDirection: "h", maxPerRow: 3 } : json
   })

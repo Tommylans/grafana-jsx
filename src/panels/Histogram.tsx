@@ -26,6 +26,7 @@ export type HistogramProps = Common & {
 export const Histogram = ({
   title,
   description,
+  display,
   w = 12,
   h = 8,
   queries,
@@ -56,5 +57,6 @@ export const Histogram = ({
         targets: queries.map((query) => query.json),
       },
       description,
+      display,
     ),
   )

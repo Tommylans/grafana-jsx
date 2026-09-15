@@ -16,6 +16,7 @@ export type TableProps = Common & {
 export const Table = ({
   title,
   description,
+  display,
   w = 12,
   h = 9,
   queries,
@@ -42,6 +43,7 @@ export const Table = ({
         targets: queries.map((query) => query.json),
       },
       description,
+      display,
     )
     return transformations ? { ...json, transformations } : json
   })

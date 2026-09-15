@@ -20,6 +20,7 @@ export type LogsProps = Common & {
 export const Logs = ({
   title,
   description,
+  display,
   w = 24,
   h = 12,
   queries,
@@ -49,5 +50,6 @@ export const Logs = ({
         targets: queries.map((query) => query.json),
       },
       description,
+      display,
     ),
   )

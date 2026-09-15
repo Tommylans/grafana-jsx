@@ -17,6 +17,7 @@ export type PieChartProps = Common & {
 export const PieChart = ({
   title,
   description,
+  display,
   w = 8,
   h = 8,
   queries,
@@ -41,5 +42,6 @@ export const PieChart = ({
         targets: queries.map((query) => query.json),
       },
       description,
+      display,
     ),
   )

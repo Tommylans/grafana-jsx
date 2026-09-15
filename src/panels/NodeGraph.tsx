@@ -14,6 +14,7 @@ export type NodeGraphProps = Common & {
 export const NodeGraph = ({
   title,
   description,
+  display,
   w = 24,
   h = 22,
   nodes,
@@ -29,5 +30,6 @@ export const NodeGraph = ({
         transformations,
       },
       description,
+      display,
     ),
   )

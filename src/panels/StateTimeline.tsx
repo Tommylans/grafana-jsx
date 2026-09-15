@@ -42,6 +42,7 @@ export const stateDefaults = (
 export const StateTimeline = ({
   title,
   description,
+  display,
   w = 24,
   h = 8,
   queries,
@@ -67,5 +68,6 @@ export const StateTimeline = ({
         targets: queries.map((query) => query.json),
       },
       description,
+      display,
     ),
   )

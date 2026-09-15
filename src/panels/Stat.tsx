@@ -5,7 +5,17 @@ import { type Common, described, head, panel } from "./fieldConfig.ts"
 export type StatProps = Common & { query: Target; unit: string; decimals?: number; color?: string }
 
 /** One number, the last value of the query. */
-export const Stat = ({ title, description, w = 4, h = 4, query, unit, decimals, color = "text" }: StatProps): Node =>
+export const Stat = ({
+  title,
+  description,
+  display,
+  w = 4,
+  h = 4,
+  query,
+  unit,
+  decimals,
+  color = "text",
+}: StatProps): Node =>
   panel(w, h, (id, x, y) => {
     const defaults: JsonObject = {
       unit,
@@ -27,5 +37,6 @@ export const Stat = ({ title, description, w = 4, h = 4, query, unit, decimals, 
         targets: [query.json],
       },
       description,
+      display,
     )
   })
