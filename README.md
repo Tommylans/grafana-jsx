@@ -58,7 +58,10 @@ component claims (add hand-written ones to `keep`).
 - **Queries** — `sql(datasource, text, { format })` for PostgreSQL, `promql(datasource, expr, {
   legend, instant, format })` for Prometheus-compatible sources, `logsql(datasource, expr, { type })`
   for VictoriaLogs (`raw` lines for `<Logs>`, `range`/`hits` for time panels, `fields` to group hits, `fieldValues(field)` as a variable query); `prometheus(uid)`,
-  `postgres(uid)` and `victorialogs(uid)` name the sources. A target carries its datasource; one panel has one datasource, mixing is an error.
+  `postgres(uid)` and `victorialogs(uid)` name the sources. PromQL that dashboards write over and over
+  has a small builder: `metric("container_cpu_usage_seconds_total").where({ node: "a" }).rate("5m").sumBy("node")`,
+  arithmetic with `.over(other, ["node"])`, `.gtBool(0).orVector(0)`; `promql()` takes it directly and
+  `raw("…")` is the escape hatch. A target carries its datasource; one panel has one datasource, mixing is an error.
 - **Maps** — `drawMap(groups, cards, lines, bars)` draws a topology in a `<Canvas>`: cards with an
   icon, a status dot, a corner `value` or up to four `metrics` in rows of two, groups per place
   (`groupAround(label, cards)` computes the box), and lines that run straight, as an L or as a Z

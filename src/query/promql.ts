@@ -7,13 +7,13 @@ export type PromqlOptions = { legend?: string; ref?: string; instant?: boolean; 
  * shapes the result as columns for transformations. */
 export const promql = (
   datasource: Datasource,
-  expr: string,
+  expr: string | { toString(): string },
   { legend = "__auto", ref = "A", instant = false, format }: PromqlOptions = {},
 ): Target => {
   const json: Record<string, Json> = {
     refId: ref,
     datasource,
-    expr,
+    expr: String(expr),
     legendFormat: legend,
     instant,
     range: !instant,
