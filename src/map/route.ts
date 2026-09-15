@@ -9,7 +9,7 @@ export type Side = "top" | "bottom" | "left" | "right"
 const vertical = (side: Side) => side === "top" || side === "bottom"
 
 /** How far a Z between two equal sides swings out beyond the cards. */
-export const OUT = 24
+export const OUT = 16
 
 /** Is coordinate `c` on the outward side of point `p` on `side`? A loose point has no outward side. */
 const outward = (p: Point, side: Side | null, c: number) =>

@@ -29,7 +29,7 @@ const knots = (elements: unknown[]) =>
 
 describe("values on lines", () => {
   test("a value that lands on another line, or on another value, is an error", () => {
-    // two parallel lines 20 px apart: the upper value box (20 px, 9 px above its line) covers the lower line
+    // two parallel lines 20 px apart: the upper value box (16 px, 7 px above its line) covers the lower line
     const near = [
       { name: "a", left: 0, top: 0, title: "A", sub: "", icon: "img/x.svg", up: null },
       { name: "b", left: 400, top: 0, title: "B", sub: "", icon: "img/x.svg", up: null },
@@ -56,20 +56,31 @@ describe("values on lines", () => {
 })
 
 describe("router", () => {
-  test("ends that line up: one connection, no knot", () => {
+  test("ends that line up: one straight connection without vertices, dashed and flowing, no arrowhead", () => {
     const els = drawMap([], cards, [
       { from: { card: "a", side: "right" }, to: { card: "b", side: "left" }, series: "s" },
     ])
     expect(connectionsOf(els, "a")).toHaveLength(1)
+    expect(connectionsOf(els, "a")[0]).toMatchObject({
+      targetName: "b",
+      direction: { mode: "fixed", fixed: "none" },
+      lineStyle: { style: "dashed", animate: true },
+    })
+    expect(connectionsOf(els, "a")[0]).not.toHaveProperty("vertices")
     expect(knots(els)).toBe(0)
   })
-  test("perpendicular sides: an L with one knot", () => {
+  test("perpendicular sides: an L is one connection with one vertex in canvas pixels", () => {
     const els = drawMap([], cards, [
       { from: { card: "a", side: "bottom" }, to: { card: "c", side: "left" }, series: "s" },
     ])
-    expect(knots(els)).toBe(1)
+    expect(knots(els)).toBe(0)
     expect(connectionsOf(els, "a")).toHaveLength(1)
-    expect(connectionsOf(els, "knot0")).toHaveLength(1)
+    expect(connectionsOf(els, "a")[0]).toMatchObject({
+      sourceOriginal: { x: 0, y: 0 },
+      targetOriginal: { x: 1, y: 1 },
+      vertices: [{ x: CARD_W / 2, y: 200 + CARD_H / 2 }],
+      radius: { fixed: 8 },
+    })
   })
   test("two equal sides: a Z that swings outside both cards", () => {
     // without b: the swing back down to c would run straight through it, and that is an error now
@@ -78,10 +89,20 @@ describe("router", () => {
       [cards[0], cards[2]],
       [{ from: { card: "a", side: "top" }, to: { card: "c", side: "top" }, series: "s" }],
     )
-    expect(knots(els)).toBe(2)
-    const knot = named(els, "knot0")
-    const top = knot && typeof knot === "object" ? Reflect.get(Reflect.get(knot, "placement"), "top") : null
-    expect(top).toBeLessThan(0) // above the top edge of the cards (y=0)
+    expect(knots(els)).toBe(0)
+    const vertices = connectionsOf(els, "a")[0]?.vertices
+    expect(vertices).toHaveLength(2)
+    expect(vertices[0].y).toBeLessThan(0) // above the top edge of the cards (y=0)
+  })
+  test("flow off draws solid lines", () => {
+    const els = drawMap(
+      [],
+      cards,
+      [{ from: { card: "a", side: "right" }, to: { card: "b", side: "left" }, series: "s" }],
+      [],
+      { flow: false },
+    )
+    expect(connectionsOf(els, "a")[0]).not.toHaveProperty("lineStyle")
   })
   test("via on a straight line or an L is an error, and so is a via on the inside", () => {
     expect(() =>
@@ -191,8 +212,7 @@ test("via may be a function of the end points", () => {
       },
     ],
   )
-  const knot = els.find((e) => typeof e === "object" && e && !Array.isArray(e) && e.name === "knot0")
-  expect(knot).toMatchObject({ placement: { top: 100 + CARD_H + 36 - 5 } })
+  expect(connectionsOf(els, "a")[0]?.vertices?.[0]).toEqual({ x: CARD_W / 2, y: 100 + CARD_H + 36 })
 })
 
 test("every card draws its icon, title, sub and dot", () => {

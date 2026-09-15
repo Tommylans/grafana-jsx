@@ -76,13 +76,17 @@ component claims (add hand-written ones to `keep`).
 - **Maps** — `drawMap(groups, cards, lines, bars)` draws a topology in a `<Canvas>`: cards with an
   icon, a status dot, a corner `value` or up to four `metrics` in rows of two, groups per place
   (`groupAround(label, cards)` computes the box), and lines that run straight, as an L or as a Z
-  between the cards with the value next to them. Cards that overlap, a value that lands on a card
-  and a line through a card it does not join are build errors, not surprises on screen.
+  between the cards with the value next to them. A line is one Canvas connection with its corners
+  as `vertices` (rounded by `cornerRadius`), dashed and flowing from source to target unless
+  `flow` is off; its color and width follow the series. Cards that overlap, a value that lands on
+  a card and a line through a card it does not join are build errors, not surprises on screen.
 - **`<CardMap>`** — the map as one component: `cards` (a typed list of `CardSpec`), `lines` between them,
   and a `<YStack>`/`<XStack>` tree as children saying what sits next to what (`gap`, `label` makes a
   group, `justify`, `align`; `<Spacer size>` is empty room along the axis, to push a card right above
   the one it is wired to). The layout places the cards, the panel height fits the result, and the
-  `drawMap` checks run on it. Underneath: `layoutMap`, `placeCards`, `drawMap`.
+  `drawMap` checks run on it; `transparent` drops the panel's own frame so the groups do the framing,
+  and a map without a title gets the 40 px the title bar would have taken. Underneath: `layoutMap`,
+  `placeCards`, `drawMap`.
 
 ```tsx
 <CardMap title="" cards={CARDS} lines={LINES} queries={queries} fieldConfig={trafficFieldConfig(10_000_000)} cardWidth={190} gap={100}>
@@ -135,9 +139,13 @@ bun run check     # biome, typecheck, tests — also the workflow on every push
 bun run format    # biome --write
 ```
 
-Facts that cost an afternoon, kept here so nobody finds them twice: Grafana draws Canvas
-`connections` in an SVG above all elements, and no Canvas element can be smaller than 10 px (a
-data: URL as icon path is looked up under `/public/build/` and 404s); `$__timeGroup` as well as
+Facts that cost an afternoon, kept here so nobody finds them twice (measured in Grafana 13.1):
+Canvas `connections` draw in an SVG above all elements, so a value can never sit on a line; a
+connection's `vertices` are canvas pixels once `sourceOriginal` is (0,0) and `targetOriginal` (1,1);
+`direction` has to be a dimension object, a bare `"none"` grows an arrowhead; `panZoom` does nothing
+without the feature toggle `canvasPanelPanZoom`; no Canvas element can be smaller than 10 px, text
+neither wraps nor scales, and a data: URL as icon path is looked up under `/public/build/` and 404s
+(raw `<svg xmlns=…>` markup is inlined instead); `$__timeGroup` as well as
 `$__timeGroupAlias` append `AS "time"` (Grafana 13), so every branch of a `union` has to yield epoch
 seconds; in a JSX attribute `"a\\b"` is literally two backslashes.
 

@@ -7,7 +7,10 @@ export type CanvasProps = Common & {
   /** The elements to draw; see `drawMap` for cards and lines. */
   elements: Json[]
   fieldConfig: PanelJson["fieldConfig"]
+  /** Scroll to zoom and drag to pan; inert unless Grafana runs with the feature toggle `canvasPanelPanZoom`. */
   panZoom?: boolean
+  /** No panel background and no border: the drawing's own frames do that work. */
+  transparent?: boolean
 }
 
 /** A Canvas panel: the drawing itself (elements, connections) comes from the caller; this is the frame. */
@@ -20,18 +23,19 @@ export const Canvas = ({
   queries,
   elements,
   fieldConfig,
-  panZoom = true,
+  panZoom = false,
+  transparent = false,
 }: CanvasProps): Node =>
   panel(w, h, (id, x, y) =>
     described(
       {
         ...head("canvas", title, id, x, y, w, h, datasourceOf(queries)),
+        ...(transparent ? { transparent: true } : {}),
         fieldConfig,
         options: {
           inlineEditing: false,
           showAdvancedTypes: true,
           panZoom,
-          infinitePan: false,
           root: {
             type: "frame",
             name: "root",
