@@ -58,16 +58,27 @@ export const queryVariable = ({
 })
 
 export type CustomVariable = Choice & { name: string; label?: string; values: string[]; current?: string }
-/** A variable with a fixed list of choices. */
+/** A variable with a fixed list of choices. It opens on `current`, else on All when `includeAll` is set
+ * (a dashboard that opens on its first value alone shows a slice and reads as if the rest is missing),
+ * else on the first value. */
 export const customVariable = ({ name, label, values, current, ...rest }: CustomVariable): JsonObject => {
-  const selected = current ?? values[0] ?? ""
+  const all = { text: "All", value: "$__all" }
+  const selected =
+    current !== undefined
+      ? { text: current, value: current }
+      : rest.includeAll
+        ? all
+        : { text: values[0] ?? "", value: values[0] ?? "" }
   return {
     type: "custom",
     name,
     ...shown(label),
     query: values.join(","),
-    options: values.map((value) => ({ text: value, value, selected: value === selected })),
-    current: { text: selected, value: selected },
+    options: [
+      ...(rest.includeAll ? [{ ...all, selected: selected.value === all.value }] : []),
+      ...values.map((value) => ({ text: value, value, selected: value === selected.value })),
+    ],
+    current: selected,
     ...choice(rest),
   }
 }
