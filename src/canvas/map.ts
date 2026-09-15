@@ -23,7 +23,8 @@ export type Card<N extends string = string> = {
   up: string | null
   /** Series name whose last value is printed in the card's bottom-right corner (a load, a rate). */
   value?: string
-  /** Up to two labelled values on a third row (`cpu 24 %`, `mem 63 %`); any card with metrics makes every card taller. */
+  /** Up to two labelled values on a third row (`cpu 24%`, `mem 63%`); labels of at most four characters,
+   * values that fit `212 B/s`. Any card with metrics makes every card on the map taller. */
   metrics?: ReadonlyArray<{ label: string; series: string }>
 }
 /** How tall the cards of a map are: taller as soon as one of them carries metrics. */
@@ -326,14 +327,15 @@ export function drawMap<N extends string>(
       ),
       connections: connectionsOf.get(card.name) ?? [],
     })
-    // The metrics row: label and value side by side, two slots across the card.
+    // The metrics row: two slots of 70 px, each a short label (four characters) and a value with room for
+    // `212 B/s`; a longer label is cut, so keep them to `cpu`, `mem`, `req`, `q/s`.
     ;(card.metrics ?? []).slice(0, 2).forEach((metric, k) => {
-      const x = card.left + 12 + k * 66
-      cardElements.push(text(`metric-label-${card.name}-${k}`, x, card.top + 54, 26, 16, metric.label, 10, ink.label))
+      const x = card.left + 10 + k * 70
+      cardElements.push(text(`metric-label-${card.name}-${k}`, x, card.top + 54, 24, 16, metric.label, 10, ink.label))
       cardElements.push({
         type: "metric-value",
         name: `metric-${card.name}-${k}`,
-        ...place(x + 26, card.top + 54, 40, 16),
+        ...place(x + 24, card.top + 54, 46, 16),
         config: {
           text: { field: metric.series, mode: "field" },
           size: 11,
