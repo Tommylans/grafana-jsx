@@ -2,7 +2,7 @@
 // optional `label` (a group on the map), `justify` along the axis and `align` across it. The cards
 // are plain objects (a `CardSpec` each) so their names stay a union type for the lines.
 import type { Node, StackNode } from "../core/node.ts"
-import type { CardSpec } from "./layout.ts"
+import type { CardSpec } from "./layoutMap.ts"
 
 type StackChild = Node | CardSpec | ReadonlyArray<StackChild> | null | undefined | false
 export type StackProps = {

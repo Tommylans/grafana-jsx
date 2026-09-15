@@ -1,6 +1,6 @@
 import type { Node } from "../core/node.ts"
 import type { Target } from "../query/datasource.ts"
-import { byName, type Colors, type Common, described, head, panel } from "./shared.ts"
+import { byName, type Colors, type Common, described, head, panel } from "./fieldConfig.ts"
 
 export type BarChartProps = Common & {
   /** A table query; `xField` names its category column. */

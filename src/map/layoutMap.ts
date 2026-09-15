@@ -2,8 +2,8 @@
 // between children, padding inside, an optional label that makes the box a group on the map, and
 // alignment along both axes. `layoutMap` measures the tree bottom-up and places it top-down, so a
 // map says what sits next to what and never where in pixels.
-import type { Node, StackNode } from "../core/node.ts"
-import { CARD_W, type Card, cardHeightOf, type Group } from "./map.ts"
+import type { Node } from "../core/node.ts"
+import { CARD_W, type Card, cardHeightOf, type Group } from "./drawMap.ts"
 
 /** A card before it has a place: everything but `left` and `top`. */
 export type CardSpec<N extends string = string> = Omit<Card<N>, "left" | "top">

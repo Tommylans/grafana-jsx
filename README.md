@@ -49,8 +49,8 @@ component claims (add hand-written ones to `keep`).
   `<Histogram>`, `<PieChart>`, `<Heatmap>`, `<StateTimeline>` and `<StatusHistory>` (a lane per
   series, `values` maps a value to a text and a color), `<Logs>`, `<Table>` (`col` for column
   formatting, `sort`, `transformations`), `<Text>` (markdown as children), `<NodeGraph>`, `<Canvas>`.
-  Each panel type's JSON lives in one file under `src/panels/`; a new panel type is a new file that
-  returns a `PanelNode` through the exported `panel()` helper. `thresholds`, `valueMap`, `byName`
+  Each panel type is one file under `src/panels/` named after the component (`PieChart.tsx`); a new
+  panel type is a new file that returns a `PanelNode` through the exported `panel()` helper. `thresholds`, `valueMap`, `byName`
   and `col` are the small shared pieces of field config.
 - **Dashboard-level** — `queryVariable`, `customVariable`, `intervalVariable`, `textboxVariable` and
   `datasourceVariable` build the template variables (`ref("name")` is `$name` for a query);
@@ -64,10 +64,19 @@ component claims (add hand-written ones to `keep`).
   (`groupAround(label, cards)` computes the box), and lines that run straight, as an L or as a Z
   between the cards with the value next to them. Cards that overlap, a value that lands on a card
   and a line through a card it does not join are build errors, not surprises on screen.
-- **Map layout** — `<YStack>` and `<XStack>` (gap, `label` for a group, `justify`, `align`) hold the
-  cards; `layoutMap(tree, { cardWidth, gap, pad })` measures and places them, `placeCards(cards, laid)`
-  hands the declared cards back with their places and their union-typed names. Positions are never
-  written by hand. Card names are a union type, so a line to an unknown card
+- **`<Map>`** — the map as one component: `cards` (a typed list of `CardSpec`), `lines` between them,
+  and a `<YStack>`/`<XStack>` tree as children saying what sits next to what (`gap`, `label` makes a
+  group, `justify`, `align`). The layout places the cards, the panel height fits the result, and the
+  `drawMap` checks run on it. Underneath: `layoutMap`, `placeCards`, `drawMap`.
+
+```tsx
+<Map title="" cards={CARDS} lines={LINES} queries={queries} fieldConfig={trafficFieldConfig(10_000_000)} cardWidth={190} gap={100}>
+  <YStack gap={120}>
+    <XStack label="Network">{[internet, router, core]}</XStack>
+    <XStack label="Rack" justify="center">{[node1, node2, node3]}</XStack>
+  </YStack>
+</Map>
+``` Card names are a union type, so a line to an unknown card
   fails at typecheck time. `trafficFieldConfig(max)` colors lines by rate and dots by `up:*`.
 - **Build** — `buildDashboards(dashboards, { outDir, check, kubernetes, keep })`. With `kubernetes`,
   every dashboard also gets a ConfigMap (label `grafana_dashboard: "1"`, folder as annotation
@@ -116,3 +125,15 @@ Facts that cost an afternoon, kept here so nobody finds them twice: Grafana draw
 data: URL as icon path is looked up under `/public/build/` and 404s); `$__timeGroup` as well as
 `$__timeGroupAlias` append `AS "time"` (Grafana 13), so every branch of a `union` has to yield epoch
 seconds; in a JSX attribute `"a\\b"` is literally two backslashes.
+
+## Layout of the repository
+
+| Path | |
+| --- | --- |
+| `src/jsx.ts` | the `h` factory and the JSX types |
+| `src/core/` | nodes, the 24-column grid, rendering a dashboard to JSON |
+| `src/dashboard/` | `<Dashboard>`, `<Row>`, variables, annotations, links |
+| `src/panels/` | one component per panel type, `fieldConfig.ts` for the shared pieces |
+| `src/map/` | `<Map>`, `<XStack>`/`<YStack>`, the layout engine, the router and the drawing |
+| `src/query/` | datasources and the `sql`/`promql`/`logsql` targets |
+| `src/build/` | `buildDashboards`, ConfigMaps for the Grafana sidecar |

@@ -1,6 +1,6 @@
 import type { Node } from "../core/node.ts"
 import type { Target } from "../query/datasource.ts"
-import { type Common, described, head, LAST, panel, type Step, thresholds } from "./shared.ts"
+import { type Common, described, head, LAST, panel, type Step, thresholds } from "./fieldConfig.ts"
 
 export type GaugeProps = Common & {
   query: Target

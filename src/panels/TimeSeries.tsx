@@ -1,6 +1,6 @@
 import type { JsonObject, Node } from "../core/node.ts"
 import type { Target } from "../query/datasource.ts"
-import { byName, type Colors, type Common, datasourceOf, described, head, panel } from "./shared.ts"
+import { byName, type Colors, type Common, datasourceOf, described, head, panel } from "./fieldConfig.ts"
 
 export type TimeSeriesProps = Common & {
   queries: Target[]

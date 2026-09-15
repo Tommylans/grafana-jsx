@@ -10,7 +10,7 @@ import {
   LEGEND_BOTTOM,
   panel,
   TOOLTIP_SINGLE,
-} from "./shared.ts"
+} from "./fieldConfig.ts"
 
 export type HistogramProps = Common & {
   queries: Target[]

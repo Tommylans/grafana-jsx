@@ -1,6 +1,6 @@
 import { rowOf } from "../core/layout.ts"
 import { type Children, type DashboardNode, flatten, type JsonObject, type Node } from "../core/node.ts"
-import { BUILT_IN_ANNOTATIONS } from "../dashboard/annotations.ts"
+import { BUILT_IN_ANNOTATIONS } from "./annotations.ts"
 
 export type DashboardProps = {
   /** File name the dashboard is written to, e.g. `traffic.json`. */

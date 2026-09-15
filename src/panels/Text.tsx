@@ -1,5 +1,5 @@
 import type { Node, PanelJson } from "../core/node.ts"
-import { type Common, described, panel } from "./shared.ts"
+import { type Common, described, panel } from "./fieldConfig.ts"
 
 export type TextProps = Common & {
   /** Markdown by default; `html` renders as-is. */

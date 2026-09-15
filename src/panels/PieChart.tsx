@@ -1,6 +1,6 @@
 import type { Node } from "../core/node.ts"
 import type { Target } from "../query/datasource.ts"
-import { byName, type Colors, type Common, datasourceOf, described, head, LAST, panel } from "./shared.ts"
+import { byName, type Colors, type Common, datasourceOf, described, head, LAST, panel } from "./fieldConfig.ts"
 
 export type PieChartProps = Common & {
   queries: Target[]

@@ -10,7 +10,6 @@ import {
   renderDashboard,
   Stat,
   sql,
-  Table,
   TimeSeries,
 } from "../src/index.ts"
 

@@ -1,5 +1,20 @@
 import { describe, expect, test } from "bun:test"
-import { CARD_H, CARD_W, type CardSpec, h, layoutMap, placeCards, XStack, YStack } from "../src/index.ts"
+import {
+  CARD_H,
+  CARD_W,
+  type CardSpec,
+  Dashboard,
+  h,
+  layoutMap,
+  Map,
+  placeCards,
+  prometheus,
+  promql,
+  renderDashboard,
+  trafficFieldConfig,
+  XStack,
+  YStack,
+} from "../src/index.ts"
 
 const CARDS = [
   { name: "a", title: "A", sub: "", icon: "img/x.svg", up: null },
@@ -37,5 +52,55 @@ describe("stacks in JSX", () => {
     expect(() => placeCards([{ ...a, name: "zz" }], layoutMap(<XStack>{a}</XStack>, {}, 0, 0))).toThrow(
       /not in the layout/,
     )
+  })
+})
+
+describe("<Map>", () => {
+  test("lays out its stack, places the cards and renders a canvas whose height fits", () => {
+    const { json } = renderDashboard(
+      <Dashboard file="m.json" title="M" uid="m">
+        <Map
+          title="map"
+          cards={CARDS}
+          lines={[{ from: { card: "a", side: "right" }, to: { card: "b", side: "left" }, series: "s" }]}
+          queries={[promql(prometheus("p"), "up")]}
+          fieldConfig={trafficFieldConfig(1)}
+          gap={100}
+        >
+          <YStack gap={40}>
+            <XStack label="one">
+              {a}
+              {b}
+            </XStack>
+            <XStack>{c}</XStack>
+          </YStack>
+        </Map>
+      </Dashboard>,
+    )
+    const panels = json.panels
+    if (!Array.isArray(panels)) throw new Error("no panels")
+    const panel = panels[0]
+    if (typeof panel !== "object" || !panel || Array.isArray(panel)) throw new Error("no panel")
+    expect(panel.type).toBe("canvas")
+    expect(panel.gridPos).toMatchObject({ h: Math.ceil((32 + CARD_H + 20 + 40 + CARD_H + 20 + 40) / 38) })
+  })
+
+  test("a map with two stacks, or a card the layout never saw, is an error", () => {
+    expect(() =>
+      renderDashboard(
+        <Dashboard file="m.json" title="M" uid="m">
+          <Map
+            title="map"
+            cards={CARDS}
+            lines={[]}
+            queries={[promql(prometheus("p"), "up")]}
+            fieldConfig={trafficFieldConfig(1)}
+          >
+            <XStack>{a}</XStack>
+            <XStack>{b}</XStack>
+          </Map>
+        </Dashboard>,
+      ),
+    ).toThrow(/exactly one stack/)
   })
 })

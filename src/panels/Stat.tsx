@@ -1,6 +1,6 @@
 import type { JsonObject, Node } from "../core/node.ts"
 import type { Target } from "../query/datasource.ts"
-import { type Common, described, head, panel } from "./shared.ts"
+import { type Common, described, head, panel } from "./fieldConfig.ts"
 
 export type StatProps = Common & { query: Target; unit: string; decimals?: number; color?: string }
 

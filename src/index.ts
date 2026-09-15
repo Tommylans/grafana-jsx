@@ -2,17 +2,34 @@
 
 export { type BuildOptions, buildDashboards } from "./build/build.ts"
 export { configMap, configMapName, type Kubernetes } from "./build/kubernetes.ts"
+export { GRID, layout, rowOf } from "./core/layout.ts"
+export type {
+  Children,
+  DashboardNode,
+  Json,
+  JsonObject,
+  Node,
+  PanelJson,
+  PanelNode,
+  RowNode,
+  StackNode,
+} from "./core/node.ts"
+export { flatten } from "./core/node.ts"
+export { renderDashboard } from "./core/render.ts"
+export { BUILT_IN_ANNOTATIONS, type PromqlAnnotation, promqlAnnotation } from "./dashboard/annotations.ts"
+export { Dashboard, type DashboardProps, Row } from "./dashboard/Dashboard.tsx"
+export { dashboardsByTag, type LinkOptions, link } from "./dashboard/links.ts"
 export {
-  type Box,
-  type CardSpec,
-  flexCol,
-  flexGrid,
-  flexRow,
-  type Laid,
-  type LayoutOptions,
-  layoutMap,
-  placeCards,
-} from "./canvas/layout.ts"
+  type CustomVariable,
+  customVariable,
+  datasourceVariable,
+  intervalVariable,
+  type QueryVariable,
+  queryVariable,
+  ref,
+  textboxVariable,
+} from "./dashboard/variables.ts"
+export { h } from "./jsx.ts"
 export {
   type Bar,
   CARD_H,
@@ -30,46 +47,24 @@ export {
   METRIC_ROW,
   type Palette,
   trafficFieldConfig,
-} from "./canvas/map.ts"
-export { OUT, type Point, route, type Segment, type Side } from "./canvas/route.ts"
-export { type StackProps, XStack, YStack } from "./canvas/stack.tsx"
-export { GRID, layout, rowOf } from "./core/layout.ts"
-export type {
-  Children,
-  DashboardNode,
-  Json,
-  JsonObject,
-  Node,
-  PanelJson,
-  PanelNode,
-  RowNode,
-  StackNode,
-} from "./core/node.ts"
-export { flatten } from "./core/node.ts"
-export { renderDashboard } from "./core/render.ts"
-export { BUILT_IN_ANNOTATIONS, type PromqlAnnotation, promqlAnnotation } from "./dashboard/annotations.ts"
-export { dashboardsByTag, type LinkOptions, link } from "./dashboard/links.ts"
+} from "./map/drawMap.ts"
 export {
-  type CustomVariable,
-  customVariable,
-  datasourceVariable,
-  intervalVariable,
-  type QueryVariable,
-  queryVariable,
-  ref,
-  textboxVariable,
-} from "./dashboard/variables.ts"
-export { h } from "./jsx.ts"
-export { BarChart, type BarChartProps } from "./panels/bar-chart.tsx"
-export { BarGauge, type BarGaugeProps } from "./panels/bar-gauge.tsx"
-export { Canvas, type CanvasProps } from "./panels/canvas.tsx"
-export { Dashboard, type DashboardProps, Row } from "./panels/dashboard.tsx"
-export { Gauge, type GaugeProps } from "./panels/gauge.tsx"
-export { Heatmap, type HeatmapProps } from "./panels/heatmap.tsx"
-export { Histogram, type HistogramProps } from "./panels/histogram.tsx"
-export { Logs, type LogsProps } from "./panels/logs.tsx"
-export { NodeGraph, type NodeGraphProps } from "./panels/node-graph.tsx"
-export { PieChart, type PieChartProps } from "./panels/pie-chart.tsx"
+  type Box,
+  type CardSpec,
+  flexCol,
+  flexGrid,
+  flexRow,
+  type Laid,
+  type LayoutOptions,
+  layoutMap,
+  placeCards,
+} from "./map/layoutMap.ts"
+export { Map, type MapProps } from "./map/Map.tsx"
+export { OUT, type Point, route, type Segment, type Side } from "./map/route.ts"
+export { type StackProps, XStack, YStack } from "./map/Stack.tsx"
+export { BarChart, type BarChartProps } from "./panels/BarChart.tsx"
+export { BarGauge, type BarGaugeProps } from "./panels/BarGauge.tsx"
+export { Canvas, type CanvasProps } from "./panels/Canvas.tsx"
 export {
   byName,
   type Colors,
@@ -90,12 +85,19 @@ export {
   thresholds,
   type ValueMap,
   valueMap,
-} from "./panels/shared.ts"
-export { Stat, type StatProps } from "./panels/stat.tsx"
-export { type StateProps, StateTimeline, StatusHistory } from "./panels/state-timeline.tsx"
-export { Table, type TableProps } from "./panels/table.tsx"
-export { Text, type TextProps } from "./panels/text.tsx"
-export { TimeSeries, type TimeSeriesProps } from "./panels/time-series.tsx"
+} from "./panels/fieldConfig.ts"
+export { Gauge, type GaugeProps } from "./panels/Gauge.tsx"
+export { Heatmap, type HeatmapProps } from "./panels/Heatmap.tsx"
+export { Histogram, type HistogramProps } from "./panels/Histogram.tsx"
+export { Logs, type LogsProps } from "./panels/Logs.tsx"
+export { NodeGraph, type NodeGraphProps } from "./panels/NodeGraph.tsx"
+export { PieChart, type PieChartProps } from "./panels/PieChart.tsx"
+export { Stat, type StatProps } from "./panels/Stat.tsx"
+export { type StateProps, StateTimeline } from "./panels/StateTimeline.tsx"
+export { StatusHistory } from "./panels/StatusHistory.tsx"
+export { Table, type TableProps } from "./panels/Table.tsx"
+export { Text, type TextProps } from "./panels/Text.tsx"
+export { TimeSeries, type TimeSeriesProps } from "./panels/TimeSeries.tsx"
 export { type Datasource, postgres, prometheus, type Target, victorialogs } from "./query/datasource.ts"
 export { fieldNames, fieldValues, type LogsqlOptions, logsql } from "./query/logsql.ts"
 export { type PromqlOptions, promql, RATE, refId } from "./query/promql.ts"
