@@ -20,8 +20,9 @@ export type QueryVariable = Choice & {
   name: string
   label?: string
   datasource: Datasource
-  /** `label_values(up, node)` on Prometheus, a `select … as __text/__value` on SQL. */
-  query: string
+  /** `label_values(up, node)` on Prometheus, a `select … as __text/__value` on SQL, `fieldValues(…)` on
+   * VictoriaLogs; a plugin that keeps its variable query as an object takes that object here. */
+  query: string | JsonObject
   /** Keep only what matches, or capture a group: `/^prod-(.*)$/`. */
   regex?: string
   /** Re-run on dashboard load (default) or whenever the time range changes. */
@@ -45,9 +46,9 @@ export const queryVariable = ({
   name,
   ...shown(label),
   datasource,
-  definition: query,
-  // Prometheus-style sources take an object, SQL sources the bare string.
-  query: datasource.type === "prometheus" ? { query, refId: `var-${name}` } : query,
+  definition: typeof query === "string" ? query : JSON.stringify(query),
+  // Prometheus-style sources take an object, SQL sources the bare string, other plugins their own object.
+  query: typeof query === "string" && datasource.type === "prometheus" ? { query, refId: `var-${name}` } : query,
   ...(regex === undefined ? {} : { regex }),
   refresh: refresh === "time" ? 2 : 1,
   sort: SORT[sort],

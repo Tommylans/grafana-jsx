@@ -57,7 +57,7 @@ component claims (add hand-written ones to `keep`).
   `promqlAnnotation` marks moments on every time panel; `dashboardsByTag` and `link` fill the header.
 - **Queries** — `sql(datasource, text, { format })` for PostgreSQL, `promql(datasource, expr, {
   legend, instant, format })` for Prometheus-compatible sources, `logsql(datasource, expr, { type })`
-  for VictoriaLogs (`raw` lines for `<Logs>`, `range`/`hits` for time panels); `prometheus(uid)`,
+  for VictoriaLogs (`raw` lines for `<Logs>`, `range`/`hits` for time panels, `fields` to group hits, `fieldValues(field)` as a variable query); `prometheus(uid)`,
   `postgres(uid)` and `victorialogs(uid)` name the sources. A target carries its datasource; one panel has one datasource, mixing is an error.
 - **Maps** — `drawMap(groups, cards, lines, bars)` draws a topology in a `<Canvas>`: cards with an
   icon and a status dot, groups per place, and lines that run straight, as an L or as a Z between

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test"
 import {
   customVariable,
   Dashboard,
+  fieldValues,
   Gauge,
   Heatmap,
   Histogram,
@@ -85,8 +86,20 @@ describe("logsql", () => {
       queryType: "statsRange",
       refId: "B",
     })
-    expect(logsql(VL, "x", { type: "hits" }).json.queryType).toBe("hits")
+    expect(logsql(VL, "x", { type: "hits", fields: ["ns"], step: "1m" }).json).toMatchObject({
+      queryType: "hits",
+      fields: ["ns"],
+      step: "1m",
+    })
     expect(logsql(VL, "x", { type: "instant" }).json.queryType).toBe("stats")
+    expect(logsql(VL, "x", { limit: 500 }).json.maxLines).toBe(500)
+  })
+
+  test("a variable on VictoriaLogs keeps the plugin's query object", () => {
+    const VL = victorialogs("victorialogs")
+    const v = queryVariable({ name: "ns", datasource: VL, query: fieldValues("kubernetes.pod_namespace") })
+    expect(v.query).toEqual({ type: "fieldValue", field: "kubernetes.pod_namespace", query: "*" })
+    expect(typeof v.definition).toBe("string")
   })
 })
 
