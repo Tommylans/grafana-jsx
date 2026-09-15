@@ -18,6 +18,9 @@ export type PanelJson = {
   targets?: Json[]
   transformations?: Json[]
   description?: string
+  /** Only on Grafana's row panel (`type: "row"`), the header a `<Section>` renders to. */
+  collapsed?: boolean
+  panels?: Json[]
 }
 
 /** A panel without `id` and without `x`/`y`: the layout assigns those. */
@@ -29,10 +32,12 @@ export type PanelNode = {
 }
 /** Panels side by side; their widths add up to at most the grid width. */
 export type RowNode = { kind: "row"; panels: PanelNode[] }
+/** A titled header with the rows under it: Grafana's row panel, which the reader can fold. */
+export type SectionNode = { kind: "section"; title: string; children: (PanelNode | RowNode)[] }
 export type DashboardNode = {
   kind: "dashboard"
   file: string
-  children: (PanelNode | RowNode)[]
+  children: (PanelNode | RowNode | SectionNode)[]
   render: (panels: PanelJson[]) => JsonObject
 }
 /** What a card on a map says about itself, apart from its name and its place. */
@@ -65,7 +70,7 @@ export type StackNode = {
   align?: "start" | "center" | "end" | "stretch"
 }
 
-export type Node = PanelNode | RowNode | DashboardNode | StackNode | SpaceNode
+export type Node = PanelNode | RowNode | SectionNode | DashboardNode | StackNode | SpaceNode
 
 /** What a component accepts as children: nodes, nested arrays of them, and the usual falsy values. */
 export type Children = Node | Children[] | null | undefined | false

@@ -1,5 +1,14 @@
 import { rowOf } from "../core/layout.ts"
-import { type Children, type DashboardNode, flatten, type JsonObject, type Node } from "../core/node.ts"
+import {
+  type Children,
+  type DashboardNode,
+  flatten,
+  type JsonObject,
+  type Node,
+  type PanelNode,
+  type RowNode,
+  type SectionNode,
+} from "../core/node.ts"
 import { BUILT_IN_ANNOTATIONS } from "./annotations.ts"
 
 export type DashboardProps = {
@@ -39,12 +48,7 @@ export const Dashboard = ({
 }: DashboardProps): DashboardNode => ({
   kind: "dashboard",
   file,
-  children: flatten(children).map((node) => {
-    if (node.kind === "dashboard") throw new Error("a dashboard inside a dashboard")
-    if (node.kind === "stack" || node.kind === "space")
-      throw new Error("a stack belongs in layoutMap, not in a dashboard")
-    return node
-  }),
+  children: stacked(children, "a dashboard"),
   render: (panels) => ({
     title,
     uid,
@@ -65,3 +69,23 @@ export const Dashboard = ({
 
 /** Panels side by side, each on its own `w`; the widths add up to at most 24. */
 export const Row = ({ children }: { children?: Children }): Node => rowOf(children)
+
+/** A titled header over the rows under it, up to the next section: Grafana's row panel, which the
+ * reader can fold. Sections do not nest. */
+export const Section = ({ title, children }: { title: string; children?: Children }): Node => ({
+  kind: "section",
+  title,
+  children: stacked(children, "a section").map((node) => {
+    if (node.kind === "section")
+      throw new Error(`section "${title}" holds section "${node.title}": sections do not nest`)
+    return node
+  }),
+})
+
+/** What stacks top to bottom: panels, rows and sections; anything else has no place here. */
+const stacked = (children: Children, where: string): (PanelNode | RowNode | SectionNode)[] =>
+  flatten(children).map((node) => {
+    if (node.kind === "dashboard") throw new Error(`a dashboard inside ${where}`)
+    if (node.kind === "stack" || node.kind === "space") throw new Error(`a stack belongs in layoutMap, not in ${where}`)
+    return node
+  })

@@ -12,12 +12,13 @@ export type {
   PanelJson,
   PanelNode,
   RowNode,
+  SectionNode,
   StackNode,
 } from "./core/node.ts"
 export { flatten } from "./core/node.ts"
 export { renderDashboard } from "./core/render.ts"
 export { BUILT_IN_ANNOTATIONS, type PromqlAnnotation, promqlAnnotation } from "./dashboard/annotations.ts"
-export { Dashboard, type DashboardProps, Row } from "./dashboard/Dashboard.tsx"
+export { Dashboard, type DashboardProps, Row, Section } from "./dashboard/Dashboard.tsx"
 export { dashboardsByTag, type LinkOptions, link } from "./dashboard/links.ts"
 export {
   type CustomVariable,
@@ -67,10 +68,12 @@ export { BarGauge, type BarGaugeProps } from "./panels/BarGauge.tsx"
 export { Canvas, type CanvasProps } from "./panels/Canvas.tsx"
 export {
   byName,
+  type Cell,
   type Colors,
   type ColProps,
   type Common,
   col,
+  colorsFor,
   datasourceOf,
   described,
   head,
@@ -79,6 +82,7 @@ export {
   linkTo,
   MIXED,
   P50_P90,
+  PALETTE,
   panel,
   type Step,
   TOOLTIP_SINGLE,
@@ -97,7 +101,7 @@ export { type StateProps, StateTimeline } from "./panels/StateTimeline.tsx"
 export { StatusHistory } from "./panels/StatusHistory.tsx"
 export { Table, type TableProps } from "./panels/Table.tsx"
 export { Text, type TextProps } from "./panels/Text.tsx"
-export { TimeSeries, type TimeSeriesProps } from "./panels/TimeSeries.tsx"
+export { type LegendValue, TimeSeries, type TimeSeriesProps } from "./panels/TimeSeries.tsx"
 export { type Datasource, postgres, prometheus, type Target, victorialogs } from "./query/datasource.ts"
 export { fieldNames, fieldValues, type LogsqlOptions, logsql } from "./query/logsql.ts"
 export { Expr, metric, raw, Selector } from "./query/metric.ts"

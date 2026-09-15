@@ -45,6 +45,43 @@ export const byName = (colors: Colors): JsonObject[] =>
     properties: [{ id: "color", value: { mode: "fixed", fixedColor: color } }],
   }))
 
+/** Twelve of Grafana's named colors that stay apart from each other on a dark and a light surface, in
+ * the order `colorsFor` hands them out. */
+export const PALETTE = [
+  "blue",
+  "orange",
+  "green",
+  "purple",
+  "red",
+  "yellow",
+  "dark-blue",
+  "dark-orange",
+  "dark-green",
+  "dark-purple",
+  "dark-red",
+  "dark-yellow",
+] as const
+
+/** One color per name, in the order given, from `PALETTE`: the same list on every panel of a dashboard
+ * gives an entity one color everywhere, whichever panels it appears on and however many others share
+ * the panel. Refuses more names than the palette has colors: the thirteenth is not a color, it is a
+ * sign the panel needs a facet or an "other" bucket. */
+export const colorsFor = (names: ReadonlyArray<string>, palette: ReadonlyArray<string> = PALETTE): Colors => {
+  if (names.length > palette.length)
+    throw new Error(`${names.length} names for ${palette.length} colors: ${names.join(", ")}`)
+  return names.map((name, index) => [name, palette[index] as string] as const)
+}
+
+/** How a table cell shows its value: a bar behind the number, the cell's background colored, or the
+ * text colored; all three color by the column's `thresholds`. */
+export type Cell = "gauge" | "lcd" | "background" | "text"
+const CELL_OPTIONS: Record<Cell, JsonObject> = {
+  gauge: { type: "gauge", mode: "gradient", valueDisplayMode: "text" },
+  lcd: { type: "gauge", mode: "lcd", valueDisplayMode: "text" },
+  background: { type: "color-background", mode: "gradient" },
+  text: { type: "color-text" },
+}
+
 export type ColProps = {
   unit?: string
   decimals?: number
@@ -52,24 +89,46 @@ export type ColProps = {
   links?: Json[]
   hidden?: boolean
   display?: string
+  /** A colored cell; needs `thresholds` (or a `color`) to say which color. */
+  cell?: Cell
+  thresholds?: Step[]
+  /** One fixed color for the cell instead of thresholds. */
+  color?: string
+  min?: number
+  max?: number
+  /** Text and color per exact value, `valueMap`'s input. */
+  values?: ValueMap
 }
-// One ordered list: the order here is the order in the JSON, and every prop maps to exactly one Grafana property id.
-const COL_PROPERTY: ReadonlyArray<[keyof ColProps, string]> = [
-  ["unit", "unit"],
-  ["decimals", "decimals"],
-  ["width", "custom.width"],
-  ["links", "links"],
-  ["hidden", "custom.hidden"],
-  ["display", "displayName"],
+// One ordered list: the order here is the order in the JSON, and every prop maps to exactly one Grafana
+// property id, with the value Grafana keeps under it.
+const COL_PROPERTY: ReadonlyArray<[keyof ColProps, string, (value: never) => Json]> = [
+  ["unit", "unit", (value: string) => value],
+  ["decimals", "decimals", (value: number) => value],
+  ["width", "custom.width", (value: number) => value],
+  ["links", "links", (value: Json[]) => value],
+  ["hidden", "custom.hidden", (value: boolean) => value],
+  ["display", "displayName", (value: string) => value],
+  ["cell", "custom.cellOptions", (value: Cell) => CELL_OPTIONS[value]],
+  ["thresholds", "thresholds", (value: Step[]) => thresholds(value)],
+  ["color", "color", (value: string) => ({ mode: "fixed", fixedColor: value })],
+  ["min", "min", (value: number) => value],
+  ["max", "max", (value: number) => value],
+  ["values", "mappings", (value: ValueMap) => valueMap(value)],
 ]
-/** Formatting for one table column by name; what does not fit here (mappings, cell colors) is a hand-written override. */
-export const col = (name: string, props: ColProps): JsonObject => ({
-  matcher: { id: "byName", options: name },
-  properties: COL_PROPERTY.flatMap(([key, id]) => {
+/** Formatting for one table column by name; what does not fit here (ranges, regex mappings) is a hand-written override. */
+export const col = (name: string, props: ColProps): JsonObject => {
+  if (props.thresholds && props.color)
+    throw new Error(`column ${name}: choose thresholds or color, a fixed color disables the thresholds`)
+  if (props.cell && !props.thresholds && !props.color)
+    throw new Error(`column ${name}: a ${props.cell} cell needs thresholds or a color`)
+  const properties = COL_PROPERTY.flatMap(([key, id, toJson]) => {
     const value = props[key]
-    return value === undefined ? [] : [{ id, value }]
-  }),
-})
+    return value === undefined ? [] : [{ id, value: toJson(value as never) }]
+  })
+  // A colored cell reads the column's thresholds only under the thresholds color mode; a fixed color sets its own.
+  if (props.thresholds) properties.push({ id: "color", value: { mode: "thresholds" } })
+  return { matcher: { id: "byName", options: name }, properties }
+}
 /** A clickable column: the cell value is appended to `base + path`. `${__value.raw}` is Grafana's own
  * interpolation and has to reach the JSON literally, hence no template literal. */
 export const linkTo = (title: string, base: string, path: string): Json[] => [

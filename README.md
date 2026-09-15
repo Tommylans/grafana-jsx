@@ -41,17 +41,27 @@ component claims (add hand-written ones to `keep`).
 ## What is in the box
 
 - **`<Dashboard>`** — title, uid, tags, time range, refresh, timezone, links, template variables.
-  Children stack top to bottom; **`<Row>`** puts panels side by side on their own `w`. The grid is 24
-  wide; a wider row is a build error. `y` and the panel ids follow the reading order, so an id is a
-  place rather than a name.
-- **Panels** — `<Stat>`, `<Gauge>`, `<BarGauge>`, `<TimeSeries>` (lines or bars, stacked, `step`
-  for series that only get a point when something changes, `repeat` per variable), `<BarChart>`,
-  `<Histogram>`, `<PieChart>`, `<Heatmap>`, `<StateTimeline>` and `<StatusHistory>` (a lane per
-  series, `values` maps a value to a text and a color), `<Logs>`, `<Table>` (`col` for column
-  formatting, `sort`, `transformations`), `<Text>` (markdown as children), `<NodeGraph>`, `<Canvas>`.
-  Each panel type is one file under `src/panels/` named after the component (`PieChart.tsx`); a new
-  panel type is a new file that returns a `PanelNode` through the exported `panel()` helper. `thresholds`, `valueMap`, `byName`
-  and `col` are the small shared pieces of field config.
+  Children stack top to bottom; **`<Row>`** puts panels side by side on their own `w`; **`<Section
+  title>`** is a titled header (Grafana's row panel, foldable by the reader) over the rows under it,
+  and sections do not nest. The grid is 24 wide; a wider row is a build error. `y` and the panel ids
+  follow the reading order, so an id is a place rather than a name.
+- **Panels** — `<Stat>` (`thresholds` color the number, `background` fills the panel with that color,
+  `sparkline` draws the series behind it), `<Gauge>`, `<BarGauge>`, `<TimeSeries>` (lines or bars,
+  stacked, `step` for series that only get a point when something changes, `points` for sparse ones,
+  `repeat` per variable, `legend="table"` with `legendValues={["last", "max"]}` per series, `thresholds`
+  as reference lines in `thresholdStyle` line/dashed/area), `<BarChart>`, `<Histogram>`, `<PieChart>`,
+  `<Heatmap>`, `<StateTimeline>` and `<StatusHistory>` (a lane per series, `values` maps a value to a
+  text and a color), `<Logs>`, `<Table>` (`col` for column formatting, `sort`, `transformations`),
+  `<Text>` (markdown as children), `<NodeGraph>`, `<Canvas>`. Each panel type is one file under
+  `src/panels/` named after the component (`PieChart.tsx`); a new panel type is a new file that returns
+  a `PanelNode` through the exported `panel()` helper. `thresholds`, `valueMap`, `byName` and `col` are
+  the small shared pieces of field config: `col("week", { unit: "percent", cell: "gauge", min: 0, max:
+  100, thresholds })` is a bar behind the number, `cell: "background"` or `"text"` color the cell, and
+  `values` maps exact values to a text and color.
+- **One color per entity** — `colorsFor(["tijn", "tom"])` hands out `PALETTE` (twelve of Grafana's named
+  colors) in order; the same list on every panel keeps an account, a node or a model the same color
+  wherever it shows up, which a per-panel palette never does. More names than colors is an error, not
+  a thirteenth hue: that panel wants a facet or an "other" bucket.
 - **Dashboard-level** — `queryVariable`, `customVariable`, `intervalVariable`, `textboxVariable` and
   `datasourceVariable` build the template variables (`ref("name")` is `$name` for a query);
   `promqlAnnotation` marks moments on every time panel; `dashboardsByTag` and `link` fill the header.
