@@ -1,8 +1,12 @@
 // Building blocks for a map in a Canvas panel: groups (frames per place), cards (icon, title,
 // subtitle, status dot), lines between them and the value next to each line. Everything is in
-// pixels on a grid Canvas does not scale. A line is a chain of Canvas `connections` between the
-// card, invisible knots and the other card. Measured on Grafana 13: connections are drawn in an SVG
-// above all elements, and no element can be smaller than 10 px, so the value sits next to the line.
+// pixels on a grid Canvas does not scale. A line is one Canvas `connection` from card to card whose
+// corners are `vertices`: with `sourceOriginal` (0,0) and `targetOriginal` (1,1) Grafana reads a
+// vertex as canvas pixels (ConnectionSVG: `X = x * (xEnd - xStart) + xStart`). Only a loose point
+// (a bar, a line to nowhere) needs an invisible knot to hang from. Measured on Grafana 13.1:
+// connections are drawn in an SVG above all elements, so the value sits next to the line, never on
+// it; `direction` must be a dimension object, a bare string falls back to `forward` and grows an
+// arrowhead; `lineStyle.animate` moves the dashes of a dashed line from source to target.
 import type { Json, JsonObject, MapCardSpec, PanelJson } from "../core/node.ts"
 import { length, type Point, route, type Segment, type Side } from "./route.ts"
 
@@ -13,6 +17,8 @@ export const CARD_H = 52
 export const METRIC_ROW = 22
 /** @deprecated the height of a card with one metrics row; use `cardHeightOf`. */
 export const CARD_H_METRICS = CARD_H + METRIC_ROW
+/** Height of the value box on a line; Grafana's floor for an element is 10 px. */
+const VALUE_H = 16
 
 export type Card<N extends string = string> = MapCardSpec & { name: N; left: number; top: number }
 /** How tall the cards of a map are: a row of 22 px per two metrics on the fullest card. */
@@ -181,7 +187,15 @@ const crosses = (s: Segment, b: Box) => {
   return x1 < b.left + b.width && x2 > b.left && y1 < b.top + b.height && y2 > b.top
 }
 
-export type MapOptions = { palette?: Palette; maxLineWidth?: number; cardWidth?: number }
+export type MapOptions = {
+  palette?: Palette
+  maxLineWidth?: number
+  cardWidth?: number
+  /** Dashed lines whose dashes move from source to target, so traffic visibly flows; off draws solid lines. */
+  flow?: boolean
+  /** How far a corner is rounded, in px. */
+  cornerRadius?: number
+}
 
 /** Renders groups, knots, cards and values to Canvas elements (in that z-order; the first lies at the
  * bottom); the lines are connections on the elements they start from. `N` is the union of card names,
@@ -191,7 +205,7 @@ export function drawMap<N extends string>(
   cards: ReadonlyArray<Card<N>>,
   lines: ReadonlyArray<Line<NoInfer<N>>>,
   bars: readonly Bar[] = [],
-  { palette: ink = DARK, maxLineWidth = 8, cardWidth: W = CARD_W }: MapOptions = {},
+  { palette: ink = DARK, maxLineWidth = 8, cardWidth: W = CARD_W, flow = true, cornerRadius = 8 }: MapOptions = {},
 ): Json[] {
   const H = cardHeightOf(cards)
   const boxOf = (card: Card<N>): Box => ({ left: card.left, top: card.top, width: W, height: H })
@@ -238,32 +252,41 @@ export function drawMap<N extends string>(
     })
     return name
   }
-  const chain = (points: Array<{ name: string; anchor: Anchor }>, color: JsonObject, size: JsonObject) => {
-    points.slice(1).forEach((to, k) => {
-      const from = points[k]
-      const connections = from && connectionsOf.get(from.name)
-      if (!from || !connections) throw new Error(`no element to hang a line from: ${from?.name ?? "?"}`)
-      connections.push({
-        source: { x: from.anchor.x, y: from.anchor.y },
-        target: { x: to.anchor.x, y: to.anchor.y },
-        targetName: to.name,
-        path: "straight",
-        direction: "none",
-        color,
-        size,
-      })
+  /** One connection from `from` to `to`, bending at `corners` (canvas px). */
+  const connect = (
+    from: { name: string; anchor: Anchor },
+    to: { name: string; anchor: Anchor },
+    corners: readonly Point[],
+    style: { color: JsonObject; size: JsonObject; dashed: boolean },
+  ) => {
+    const connections = connectionsOf.get(from.name)
+    if (!connections) throw new Error(`no element to hang a line from: ${from.name}`)
+    connections.push({
+      source: { x: from.anchor.x, y: from.anchor.y },
+      target: { x: to.anchor.x, y: to.anchor.y },
+      targetName: to.name,
+      path: "straight",
+      direction: { mode: "fixed", fixed: "none" },
+      color: style.color,
+      size: style.size,
+      ...(corners.length === 0
+        ? {}
+        : {
+            sourceOriginal: { x: 0, y: 0 },
+            targetOriginal: { x: 1, y: 1 },
+            vertices: corners.map((p) => ({ x: Math.round(p.x), y: Math.round(p.y) })),
+            radius: { fixed: cornerRadius, min: 0, max: 100 },
+          }),
+      ...(style.dashed ? { lineStyle: { style: "dashed", animate: true } } : {}),
     })
   }
   for (const card of cards) connectionsOf.set(card.name, [])
   for (const bar of bars) {
-    chain(
-      [
-        { name: knotAt(bar.from), anchor: { x: 0, y: 0 } },
-        { name: knotAt(bar.to), anchor: { x: 0, y: 0 } },
-      ],
-      { fixed: ink.bar },
-      { fixed: 2 },
-    )
+    connect({ name: knotAt(bar.from), anchor: { x: 0, y: 0 } }, { name: knotAt(bar.to), anchor: { x: 0, y: 0 } }, [], {
+      color: { fixed: ink.bar },
+      size: { fixed: 2 },
+      dashed: false,
+    })
   }
   const values: Json[] = []
   const placed: { series: string; segments: Segment[]; box: Box }[] = []
@@ -280,22 +303,26 @@ export function drawMap<N extends string>(
       if (hit) throw new Error(`line "${line.series}" crosses card ${card.name}`)
     }
     const corners = segments.slice(1).map((segment) => segment.a)
-    const points = [
-      { name: from.name ?? knotAt(from.p), anchor: from.anchor },
-      ...corners.map((p) => ({ name: knotAt(p), anchor: { x: 0, y: 0 } })),
-      { name: to.name ?? knotAt(to.p), anchor: to.anchor },
-    ]
     // `fixed` is the fallback without data: the line stays thin and grey instead of vanishing.
-    chain(points, { fixed: ink.line, field: line.series }, { fixed: 1, field: line.series, min: 1, max: maxLineWidth })
+    connect(
+      { name: from.name ?? knotAt(from.p), anchor: from.anchor },
+      { name: to.name ?? knotAt(to.p), anchor: to.anchor },
+      corners,
+      {
+        color: { fixed: ink.line, field: line.series },
+        size: { fixed: 1, field: line.series, min: 1, max: maxLineWidth },
+        dashed: flow,
+      },
+    )
     // The value next to the longest segment: above a horizontal one, right of a vertical one.
     const longest = segments.reduce((m, s) => (length(s) > length(m) ? s : m))
     const mid = { x: (longest.a.x + longest.b.x) / 2, y: (longest.a.y + longest.b.y) / 2 }
     const horizontal = Math.abs(longest.b.x - longest.a.x) > Math.abs(longest.b.y - longest.a.y)
     // No wider than the segment it belongs to, or the box slides over a card.
-    const width = horizontal ? Math.max(48, Math.min(68, length(longest) - 6)) : 68
-    const left = horizontal ? mid.x - width / 2 : mid.x + 9
-    const top = horizontal ? mid.y - 29 : mid.y - 10
-    const box: Box = { left: Math.round(left), top: Math.round(top), width, height: 20 }
+    const width = horizontal ? Math.max(44, Math.min(64, length(longest) - 6)) : 64
+    const left = horizontal ? mid.x - width / 2 : mid.x + 8
+    const top = horizontal ? mid.y - VALUE_H - 7 : mid.y - VALUE_H / 2
+    const box: Box = { left: Math.round(left), top: Math.round(top), width, height: VALUE_H }
     for (const card of cards) {
       if (overlaps(box, boxOf(card))) throw new Error(`the value of "${line.series}" lands on card ${card.name}`)
     }
@@ -303,10 +330,10 @@ export function drawMap<N extends string>(
     values.push({
       type: "metric-value",
       name: `value${i}`,
-      ...place(Math.round(left), Math.round(top), width, 20),
+      ...place(Math.round(left), Math.round(top), width, VALUE_H),
       config: {
         text: { field: line.series, mode: "field" },
-        size: 12,
+        size: 11,
         align: "center",
         valign: "middle",
         color: { fixed: ink.value },
@@ -316,7 +343,7 @@ export function drawMap<N extends string>(
     })
   })
   // A value box on another line's path, or on another value, is as unreadable as one on a card:
-  // parallel lines closer together than a value box (20 px, 9 px above a horizontal segment) put
+  // parallel lines closer together than a value box (16 px, 7 px above a horizontal segment) put
   // each value on its neighbour. Found here, so the map gets more room instead of a screenshot.
   for (const a of placed) {
     for (const b of placed) {
@@ -399,7 +426,7 @@ export function drawMap<N extends string>(
       })
     }
   }
-  // z-order: groups, knots (invisible), cards, and the values on top.
+  // z-order: groups, knots (invisible), cards, and the values on top; the connections draw above all of them.
   return [...groupElements, ...knots, ...cardElements, ...values]
 }
 

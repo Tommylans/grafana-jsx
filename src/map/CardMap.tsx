@@ -20,6 +20,7 @@ export type CardMapProps<N extends string> = Omit<Common, "h"> &
     /** Rows on the dashboard grid; unset fits the layout. */
     h?: number
     panZoom?: boolean
+    transparent?: boolean
     /** Where the layout's top-left corner lands on the canvas; a narrow screen wants a smaller margin. */
     left?: number
     top?: number
@@ -27,8 +28,9 @@ export type CardMapProps<N extends string> = Omit<Common, "h"> &
     children?: Children
   }
 
-/** Grafana draws a row as 30 px plus an 8 px gutter, and the panel keeps ~40 px for its chrome. */
-const rowsFor = (px: number) => Math.ceil((px + 40) / 38)
+/** Grafana draws a row as 30 px plus an 8 px gutter (`38h - 8` px for `h` rows); the title bar takes 40 px
+ * of that and the border 2 px (measured in PanelChrome on 13.1: no title means no header at all). */
+const rowsFor = (px: number, titled: boolean) => Math.ceil((px + (titled ? 50 : 10)) / 38)
 
 export function CardMap<N extends string>({
   title,
@@ -47,7 +49,10 @@ export function CardMap<N extends string>({
   cardHeight,
   palette,
   maxLineWidth,
-  panZoom = true,
+  flow,
+  cornerRadius,
+  panZoom = false,
+  transparent = false,
   left = 20,
   top = 20,
   children,
@@ -68,16 +73,19 @@ export function CardMap<N extends string>({
     ...(cardWidth === undefined ? {} : { cardWidth }),
     ...(palette === undefined ? {} : { palette }),
     ...(maxLineWidth === undefined ? {} : { maxLineWidth }),
+    ...(flow === undefined ? {} : { flow }),
+    ...(cornerRadius === undefined ? {} : { cornerRadius }),
   }
   const elements = drawMap(laid.groups, placed, lines, bars, mapOptions)
   return Canvas({
     title,
     ...(description === undefined ? {} : { description }),
     w,
-    h: h ?? rowsFor(laid.height + top),
+    h: h ?? rowsFor(laid.height + top, title !== ""),
     queries,
     elements,
     fieldConfig,
     panZoom,
+    transparent,
   })
 }

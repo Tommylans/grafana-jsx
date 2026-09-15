@@ -63,8 +63,8 @@ export function layoutMap(tree: Node | Box<string>, options: LayoutOptions = {},
   const root: Box<string> = "kind" in tree ? boxOf(tree) : tree
   const cardWidth = options.cardWidth ?? CARD_W
   const cardHeight = options.cardHeight ?? cardHeightOf(collectCards(root))
-  const gapDefault = options.gap ?? 40
-  const pad = options.pad ?? 20
+  const gapDefault = options.gap ?? 32
+  const pad = options.pad ?? 16
   const labelHeight = options.labelHeight ?? 32
 
   const measure = (box: Box<string>): Size => {
