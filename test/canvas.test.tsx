@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { CARD_H, CARD_W, type Card, drawMap } from "../src/index.ts"
+import { CARD_H, CARD_H_METRICS, CARD_W, type Card, cardHeightOf, drawMap, groupAround } from "../src/index.ts"
 
 const cards = [
   { name: "a", left: 0, top: 0, title: "A", sub: "", icon: "img/x.svg", up: null },
@@ -35,7 +35,12 @@ describe("router", () => {
     expect(connectionsOf(els, "knot0")).toHaveLength(1)
   })
   test("two equal sides: a Z that swings outside both cards", () => {
-    const els = drawMap([], cards, [{ from: { card: "a", side: "top" }, to: { card: "c", side: "top" }, series: "s" }])
+    // without b: the swing back down to c would run straight through it, and that is an error now
+    const els = drawMap(
+      [],
+      [cards[0], cards[2]],
+      [{ from: { card: "a", side: "top" }, to: { card: "c", side: "top" }, series: "s" }],
+    )
     expect(knots(els)).toBe(2)
     const knot = named(els, "knot0")
     const top = knot && typeof knot === "object" ? Reflect.get(Reflect.get(knot, "placement"), "top") : null
@@ -90,4 +95,38 @@ test("a card with a value prints it in its corner", () => {
   )
   const value = elements.find((e) => typeof e === "object" && e && !Array.isArray(e) && e.name === "value-a")
   expect(value).toMatchObject({ type: "metric-value", config: { text: { field: "load:a", mode: "field" } } })
+})
+
+test("cards that overlap, a value on a card, and a line through a card are build errors", () => {
+  const a = { name: "a", left: 0, top: 0, title: "A", sub: "", icon: "img/x.svg", up: null } as const
+  expect(() => drawMap([], [a, { ...a, name: "b", left: 100 }], [])).toThrow(/overlap/)
+  const c = { ...a, name: "c", left: 400, top: 0 } as const
+  const between = { ...a, name: "m", left: 200, top: 0 } as const
+  expect(() =>
+    drawMap(
+      [],
+      [a, c, between],
+      [{ from: { card: "a", side: "right" }, to: { card: "c", side: "left" }, series: "s" }],
+    ),
+  ).toThrow(/crosses card m/)
+})
+
+test("a metrics row makes every card taller and groupAround follows", () => {
+  const a = {
+    name: "a",
+    left: 0,
+    top: 40,
+    title: "A",
+    sub: "",
+    icon: "img/x.svg",
+    up: null,
+    metrics: [{ label: "cpu", series: "cpu:a" }],
+  } as const
+  const b = { name: "b", left: 300, top: 40, title: "B", sub: "", icon: "img/x.svg", up: null } as const
+  expect(cardHeightOf([a, b])).toBe(CARD_H_METRICS)
+  expect(groupAround("g", [a, b])).toEqual({ left: -20, top: 8, width: 490, height: 32 + 76 + 20, label: "g" })
+  const elements = drawMap([], [a, b], [])
+  const card = elements.find((e) => typeof e === "object" && e && !Array.isArray(e) && e.name === "b")
+  expect(card).toMatchObject({ placement: { height: CARD_H_METRICS } })
+  expect(elements.some((e) => typeof e === "object" && e && !Array.isArray(e) && e.name === "metric-a-0")).toBe(true)
 })

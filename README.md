@@ -60,8 +60,10 @@ component claims (add hand-written ones to `keep`).
   for VictoriaLogs (`raw` lines for `<Logs>`, `range`/`hits` for time panels, `fields` to group hits, `fieldValues(field)` as a variable query); `prometheus(uid)`,
   `postgres(uid)` and `victorialogs(uid)` name the sources. A target carries its datasource; one panel has one datasource, mixing is an error.
 - **Maps** — `drawMap(groups, cards, lines, bars)` draws a topology in a `<Canvas>`: cards with an
-  icon and a status dot, groups per place, and lines that run straight, as an L or as a Z between
-  the cards with the value next to them; a card can print a value of its own (`value`) in its corner. Card names are a union type, so a line to an unknown card
+  icon, a status dot, a corner `value` or a `metrics` row (two labelled values), groups per place
+  (`groupAround(label, cards)` computes the box), and lines that run straight, as an L or as a Z
+  between the cards with the value next to them. Cards that overlap, a value that lands on a card
+  and a line through a card it does not join are build errors, not surprises on screen. Card names are a union type, so a line to an unknown card
   fails at typecheck time. `trafficFieldConfig(max)` colors lines by rate and dots by `up:*`.
 - **Build** — `buildDashboards(dashboards, { outDir, check, kubernetes, keep })`. With `kubernetes`,
   every dashboard also gets a ConfigMap (label `grafana_dashboard: "1"`, folder as annotation

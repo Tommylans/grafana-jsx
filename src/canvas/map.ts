@@ -4,10 +4,12 @@
 // card, invisible knots and the other card. Measured on Grafana 13: connections are drawn in an SVG
 // above all elements, and no element can be smaller than 10 px, so the value sits next to the line.
 import type { Json, JsonObject, PanelJson } from "../core/node.ts"
-import { length, type Point, route, type Side } from "./route.ts"
+import { length, type Point, route, type Segment, type Side } from "./route.ts"
 
 export const CARD_W = 150
+/** Height of a card without metrics; with a metrics row every card on the map is `CARD_H_METRICS` tall. */
 export const CARD_H = 52
+export const CARD_H_METRICS = 76
 
 export type Card<N extends string = string> = {
   name: N
@@ -21,6 +23,32 @@ export type Card<N extends string = string> = {
   up: string | null
   /** Series name whose last value is printed in the card's bottom-right corner (a load, a rate). */
   value?: string
+  /** Up to two labelled values on a third row (`cpu 24 %`, `mem 63 %`); any card with metrics makes every card taller. */
+  metrics?: ReadonlyArray<{ label: string; series: string }>
+}
+/** How tall the cards of a map are: taller as soon as one of them carries metrics. */
+export const cardHeightOf = (cards: ReadonlyArray<Card<string>>): number =>
+  cards.some((card) => card.metrics && card.metrics.length > 0) ? CARD_H_METRICS : CARD_H
+
+/** The box around a set of cards: `pad` on three sides and room for the label on top. */
+export const groupAround = (
+  label: string,
+  cards: ReadonlyArray<Card<string>>,
+  { pad = 20, labelHeight = 32, cardHeight }: { pad?: number; labelHeight?: number; cardHeight?: number } = {},
+): Group => {
+  if (cards.length === 0) throw new Error(`group ${label} has no cards`)
+  const h = cardHeight ?? cardHeightOf(cards)
+  const left = Math.min(...cards.map((c) => c.left))
+  const top = Math.min(...cards.map((c) => c.top))
+  const right = Math.max(...cards.map((c) => c.left + CARD_W))
+  const bottom = Math.max(...cards.map((c) => c.top + h))
+  return {
+    left: left - pad,
+    top: top - labelHeight,
+    width: right - left + 2 * pad,
+    height: bottom - top + labelHeight + pad,
+    label,
+  }
 }
 export type Group = { left: number; top: number; width: number; height: number; label: string }
 /** One end of a line: a side of a card (`at` is the position along that side, 0..1, center by
@@ -104,7 +132,7 @@ type Anchor = Point
 type Endpoint = { p: Point; side: Side | null; name: string | null; anchor: Anchor }
 
 /** Where an end sits (px) and how the connection attaches there: Grafana's anchor space runs from -1 to 1, y=1 is up. */
-function endpoint<N extends string>(end: End<N>, cards: ReadonlyMap<N, Card<N>>): Endpoint {
+function endpoint<N extends string>(end: End<N>, cards: ReadonlyMap<N, Card<N>>, h: number): Endpoint {
   if ("x" in end) return { p: { x: end.x, y: end.y }, side: null, name: null, anchor: { x: 0, y: 0 } }
   const card = cards.get(end.card)
   if (!card) throw new Error(`unknown card ${end.card}`)
@@ -119,26 +147,38 @@ function endpoint<N extends string>(end: End<N>, cards: ReadonlyMap<N, Card<N>>)
       }
     case "bottom":
       return {
-        p: { x: card.left + at * CARD_W, y: card.top + CARD_H },
+        p: { x: card.left + at * CARD_W, y: card.top + h },
         side: "bottom",
         name: end.card,
         anchor: { x: 2 * at - 1, y: -1 },
       }
     case "left":
       return {
-        p: { x: card.left, y: card.top + at * CARD_H },
+        p: { x: card.left, y: card.top + at * h },
         side: "left",
         name: end.card,
         anchor: { x: -1, y: 1 - 2 * at },
       }
     case "right":
       return {
-        p: { x: card.left + CARD_W, y: card.top + at * CARD_H },
+        p: { x: card.left + CARD_W, y: card.top + at * h },
         side: "right",
         name: end.card,
         anchor: { x: 1, y: 1 - 2 * at },
       }
   }
+}
+
+type Box = { left: number; top: number; width: number; height: number }
+const overlaps = (a: Box, b: Box) =>
+  a.left < b.left + b.width && b.left < a.left + a.width && a.top < b.top + b.height && b.top < a.top + a.height
+/** Does an axis-aligned segment pass through the inside of a box (touching the edge does not count)? */
+const crosses = (s: Segment, b: Box) => {
+  const x1 = Math.min(s.a.x, s.b.x)
+  const x2 = Math.max(s.a.x, s.b.x)
+  const y1 = Math.min(s.a.y, s.b.y)
+  const y2 = Math.max(s.a.y, s.b.y)
+  return x1 < b.left + b.width && x2 > b.left && y1 < b.top + b.height && y2 > b.top
 }
 
 export type MapOptions = { palette?: Palette; maxLineWidth?: number }
@@ -153,6 +193,14 @@ export function drawMap<N extends string>(
   bars: readonly Bar[] = [],
   { palette: ink = DARK, maxLineWidth = 8 }: MapOptions = {},
 ): Json[] {
+  const H = cardHeightOf(cards)
+  const boxOf = (card: Card<N>): Box => ({ left: card.left, top: card.top, width: CARD_W, height: H })
+  // Two cards on top of each other is a layout mistake, and this is the place it is cheapest to find.
+  cards.forEach((a, i) => {
+    for (const b of cards.slice(i + 1)) {
+      if (overlaps(boxOf(a), boxOf(b))) throw new Error(`cards ${a.name} and ${b.name} overlap`)
+    }
+  })
   const groupElements: Json[] = []
   for (const g of groups) {
     groupElements.push(
@@ -219,9 +267,16 @@ export function drawMap<N extends string>(
   }
   const values: Json[] = []
   lines.forEach((line, i) => {
-    const from = endpoint(line.from, byName)
-    const to = endpoint(line.to, byName)
+    const from = endpoint(line.from, byName, H)
+    const to = endpoint(line.to, byName, H)
     const segments = route(from.p, from.side, to.p, to.side, line.via, line.series)
+    // A line may touch the two cards it joins and nothing else: a segment through another card is a
+    // layout mistake, found here rather than on screen.
+    for (const card of cards) {
+      if (card.name === from.name || card.name === to.name) continue
+      const hit = segments.find((segment) => crosses(segment, boxOf(card)))
+      if (hit) throw new Error(`line "${line.series}" crosses card ${card.name}`)
+    }
     const corners = segments.slice(1).map((segment) => segment.a)
     const points = [
       { name: from.name ?? knotAt(from.p), anchor: from.anchor },
@@ -238,6 +293,10 @@ export function drawMap<N extends string>(
     const width = horizontal ? Math.max(48, Math.min(68, length(longest) - 6)) : 68
     const left = horizontal ? mid.x - width / 2 : mid.x + 9
     const top = horizontal ? mid.y - 29 : mid.y - 10
+    const box: Box = { left: Math.round(left), top: Math.round(top), width, height: 20 }
+    for (const card of cards) {
+      if (overlaps(box, boxOf(card))) throw new Error(`the value of "${line.series}" lands on card ${card.name}`)
+    }
     values.push({
       type: "metric-value",
       name: `value${i}`,
@@ -261,11 +320,30 @@ export function drawMap<N extends string>(
         card.left,
         card.top,
         CARD_W,
-        CARD_H,
+        H,
         { color: { fixed: ink.card } },
         { color: { fixed: ink.cardBorder }, width: 1, radius: 8 },
       ),
       connections: connectionsOf.get(card.name) ?? [],
+    })
+    // The metrics row: label and value side by side, two slots across the card.
+    ;(card.metrics ?? []).slice(0, 2).forEach((metric, k) => {
+      const x = card.left + 12 + k * 66
+      cardElements.push(text(`metric-label-${card.name}-${k}`, x, card.top + 54, 26, 16, metric.label, 10, ink.label))
+      cardElements.push({
+        type: "metric-value",
+        name: `metric-${card.name}-${k}`,
+        ...place(x + 26, card.top + 54, 40, 16),
+        config: {
+          text: { field: metric.series, mode: "field" },
+          size: 11,
+          align: "left",
+          valign: "middle",
+          color: { fixed: ink.value },
+        },
+        background: { color: { fixed: "transparent" } },
+        border: { color: { fixed: "transparent" }, width: 0 },
+      })
     })
     cardElements.push({
       type: "icon",
@@ -282,6 +360,7 @@ export function drawMap<N extends string>(
         type: "metric-value",
         name: `value-${card.name}`,
         ...place(card.left + CARD_W - 62, card.top + CARD_H - 22, 54, 16),
+        // the corner value sits on the second line, whatever the card height
         config: {
           text: { field: card.value, mode: "field" },
           size: 11,
