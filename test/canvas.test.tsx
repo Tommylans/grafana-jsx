@@ -147,3 +147,22 @@ test("a metrics row makes every card taller and groupAround follows", () => {
   expect(card).toMatchObject({ placement: { height: CARD_H_METRICS } })
   expect(elements.some((e) => typeof e === "object" && e && !Array.isArray(e) && e.name === "metric-a-0")).toBe(true)
 })
+
+test("via may be a function of the end points", () => {
+  const a = { name: "a", left: 0, top: 100, title: "A", sub: "", icon: "img/x.svg", up: null } as const
+  const b = { name: "b", left: 300, top: 300, title: "B", sub: "", icon: "img/x.svg", up: null } as const
+  const els = drawMap(
+    [],
+    [a, b],
+    [
+      {
+        from: { card: "a", side: "bottom" },
+        to: { card: "b", side: "top" },
+        series: "s",
+        via: ({ from }) => from.y + 36,
+      },
+    ],
+  )
+  const knot = els.find((e) => typeof e === "object" && e && !Array.isArray(e) && e.name === "knot0")
+  expect(knot).toMatchObject({ placement: { top: 100 + CARD_H + 36 - 5 } })
+})

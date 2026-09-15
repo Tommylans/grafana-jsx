@@ -49,8 +49,14 @@ export type Group = { left: number; top: number; width: number; height: number; 
  * default) or a loose point. */
 export type End<N extends string = string> = { card: N; side: Side; at?: number } | { x: number; y: number }
 /** A line between two ends; `via` is the coordinate of the middle segment of a Z (y for vertical
- * sides, x for horizontal ones) and an error on a straight line or an L. */
-export type Line<N extends string = string> = { from: End<N>; to: End<N>; series: string; via?: number }
+ * sides, x for horizontal ones) and an error on a straight line or an L. As a function it gets the
+ * two end points, so a map that never writes positions can still say "36 px below where it leaves". */
+export type Line<N extends string = string> = {
+  from: End<N>
+  to: End<N>
+  series: string
+  via?: number | ((ends: { from: Point; to: Point }) => number)
+}
 /** A neutral bar between two points (a backplane, a bus): nothing is measured on it, it ties lines together. */
 export type Bar = { from: Point; to: Point }
 
@@ -263,7 +269,8 @@ export function drawMap<N extends string>(
   lines.forEach((line, i) => {
     const from = endpoint(line.from, byName, W, H)
     const to = endpoint(line.to, byName, W, H)
-    const segments = route(from.p, from.side, to.p, to.side, line.via, line.series)
+    const via = typeof line.via === "function" ? line.via({ from: from.p, to: to.p }) : line.via
+    const segments = route(from.p, from.side, to.p, to.side, via, line.series)
     // A line may touch the two cards it joins and nothing else: a segment through another card is a
     // layout mistake, found here rather than on screen.
     for (const card of cards) {
