@@ -81,3 +81,13 @@ describe("router", () => {
     expect(CARD_H).toBe(52)
   })
 })
+
+test("a card with a value prints it in its corner", () => {
+  const elements = drawMap(
+    [],
+    [{ name: "a", left: 0, top: 0, title: "A", sub: "", icon: "img/x.svg", up: null, value: "load:a" }],
+    [],
+  )
+  const value = elements.find((e) => typeof e === "object" && e && !Array.isArray(e) && e.name === "value-a")
+  expect(value).toMatchObject({ type: "metric-value", config: { text: { field: "load:a", mode: "field" } } })
+})

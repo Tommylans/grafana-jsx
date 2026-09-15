@@ -19,6 +19,8 @@ export type Card<N extends string = string> = {
   icon: string
   /** Series name whose last value colors the status dot (0 red, 1 green), or null for no dot. */
   up: string | null
+  /** Series name whose last value is printed in the card's bottom-right corner (a load, a rate). */
+  value?: string
 }
 export type Group = { left: number; top: number; width: number; height: number; label: string }
 /** One end of a line: a side of a card (`at` is the position along that side, 0..1, center by
@@ -275,6 +277,22 @@ export function drawMap<N extends string>(
       text(`title-${card.name}`, card.left + 46, card.top + 7, CARD_W - 60, 20, card.title, 13, ink.title),
     )
     cardElements.push(text(`sub-${card.name}`, card.left + 46, card.top + 27, CARD_W - 52, 18, card.sub, 10, ink.muted))
+    if (card.value) {
+      cardElements.push({
+        type: "metric-value",
+        name: `value-${card.name}`,
+        ...place(card.left + CARD_W - 62, card.top + CARD_H - 22, 54, 16),
+        config: {
+          text: { field: card.value, mode: "field" },
+          size: 11,
+          align: "right",
+          valign: "middle",
+          color: { fixed: ink.muted },
+        },
+        background: { color: { fixed: "transparent" } },
+        border: { color: { fixed: "transparent" }, width: 0 },
+      })
+    }
     if (card.up) {
       cardElements.push({
         type: "ellipse",
