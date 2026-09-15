@@ -329,6 +329,14 @@ export function drawMap<N extends string>(
     })
     // The metrics rows: two slots per row across the card, each a short label (four characters) and a
     // value; the slot grows with the card width, so wide cards fit `275 kB/s`.
+    cardElements.push({
+      type: "icon",
+      name: `icon-${card.name}`,
+      ...place(card.left + 12, card.top + 14, 24, 24),
+      config: { path: { fixed: card.icon, mode: "fixed" }, fill: { fixed: ink.icon } },
+    })
+    cardElements.push(text(`title-${card.name}`, card.left + 46, card.top + 7, W - 60, 20, card.title, 13, ink.title))
+    cardElements.push(text(`sub-${card.name}`, card.left + 46, card.top + 27, W - 52, 18, card.sub, 10, ink.muted))
     const slot = (W - 20) / 2
     ;(card.metrics ?? []).slice(0, 4).forEach((metric, k) => {
       const x = card.left + 10 + (k % 2) * slot

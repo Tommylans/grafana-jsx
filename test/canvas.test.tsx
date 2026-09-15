@@ -166,3 +166,9 @@ test("via may be a function of the end points", () => {
   const knot = els.find((e) => typeof e === "object" && e && !Array.isArray(e) && e.name === "knot0")
   expect(knot).toMatchObject({ placement: { top: 100 + CARD_H + 36 - 5 } })
 })
+
+test("every card draws its icon, title, sub and dot", () => {
+  const a = { name: "a", left: 0, top: 0, title: "A", sub: "s", icon: "img/x.svg", up: "up:a" } as const
+  const names = drawMap([], [a], []).map((e) => (typeof e === "object" && e && !Array.isArray(e) ? e.name : ""))
+  expect(names).toEqual(expect.arrayContaining(["a", "icon-a", "title-a", "sub-a", "up-a"]))
+})
