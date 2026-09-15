@@ -107,6 +107,23 @@ describe("the newer panel types", () => {
   })
 })
 
+describe("customVariable", () => {
+  test("opens on All when includeAll is set and nothing else is asked, else on the first value", () => {
+    const all = customVariable({ name: "level", values: ["error", "warn"], multi: true, includeAll: true })
+    expect(all.current).toEqual({ text: "All", value: "$__all" })
+    expect(all.options).toEqual([
+      { text: "All", value: "$__all", selected: true },
+      { text: "error", value: "error", selected: false },
+      { text: "warn", value: "warn", selected: false },
+    ])
+    const first = customVariable({ name: "level", values: ["error", "warn"] })
+    expect(first.current).toEqual({ text: "error", value: "error" })
+    expect(
+      customVariable({ name: "level", values: ["error", "warn"], includeAll: true, current: "warn" }).current,
+    ).toEqual({ text: "warn", value: "warn" })
+  })
+})
+
 describe("logsql", () => {
   test("maps the four query kinds to the plugin's queryType", () => {
     const VL = victorialogs("victorialogs")
