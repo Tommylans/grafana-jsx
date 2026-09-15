@@ -26,16 +26,20 @@ export const dashboardsByTag = (
   url: "",
 })
 
-/** A plain link. */
-export const link = (title: string, url: string, { newTab = true }: { newTab?: boolean } = {}): JsonObject => ({
+/** A plain link; `keepTime` carries the current range along (the jump from a spike to the logs of that moment). */
+export const link = (
+  title: string,
+  url: string,
+  { newTab = true, keepTime = false, includeVars = false }: LinkOptions & { newTab?: boolean } = {},
+): JsonObject => ({
   title,
   type: "link",
   url,
   targetBlank: newTab,
   tags: [],
   asDropdown: false,
-  includeVars: false,
-  keepTime: false,
+  includeVars,
+  keepTime,
   icon: "external link",
   tooltip: "",
 })
