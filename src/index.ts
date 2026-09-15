@@ -16,6 +16,7 @@ export {
   groupAround,
   type Line,
   type MapOptions,
+  METRIC_ROW,
   type Palette,
   trafficFieldConfig,
 } from "./canvas/map.ts"

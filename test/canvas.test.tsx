@@ -1,5 +1,14 @@
 import { describe, expect, test } from "bun:test"
-import { CARD_H, CARD_H_METRICS, CARD_W, type Card, cardHeightOf, drawMap, groupAround } from "../src/index.ts"
+import {
+  CARD_H,
+  CARD_H_METRICS,
+  CARD_W,
+  type Card,
+  cardHeightOf,
+  drawMap,
+  groupAround,
+  METRIC_ROW,
+} from "../src/index.ts"
 
 const cards = [
   { name: "a", left: 0, top: 0, title: "A", sub: "", icon: "img/x.svg", up: null },
@@ -124,7 +133,15 @@ test("a metrics row makes every card taller and groupAround follows", () => {
   } as const
   const b = { name: "b", left: 300, top: 40, title: "B", sub: "", icon: "img/x.svg", up: null } as const
   expect(cardHeightOf([a, b])).toBe(CARD_H_METRICS)
-  expect(groupAround("g", [a, b])).toEqual({ left: -20, top: 8, width: 490, height: 32 + 76 + 20, label: "g" })
+  expect(cardHeightOf([{ ...a, metrics: [...a.metrics, ...a.metrics, ...a.metrics] }])).toBe(CARD_H + 2 * METRIC_ROW)
+  expect(groupAround("g", [a, b])).toEqual({
+    left: -20,
+    top: 8,
+    width: 490,
+    height: 32 + CARD_H_METRICS + 20,
+    label: "g",
+  })
+  expect(groupAround("g", [a, b], { cardWidth: 190 }).width).toBe(530)
   const elements = drawMap([], [a, b], [])
   const card = elements.find((e) => typeof e === "object" && e && !Array.isArray(e) && e.name === "b")
   expect(card).toMatchObject({ placement: { height: CARD_H_METRICS } })

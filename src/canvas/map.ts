@@ -6,10 +6,13 @@
 import type { Json, JsonObject, PanelJson } from "../core/node.ts"
 import { length, type Point, route, type Segment, type Side } from "./route.ts"
 
+/** Default card width; a map may choose another (`cardWidth`), wider cards fit longer values. */
 export const CARD_W = 150
-/** Height of a card without metrics; with a metrics row every card on the map is `CARD_H_METRICS` tall. */
+/** Height of a card without metrics; each row of two metrics adds `METRIC_ROW`. */
 export const CARD_H = 52
-export const CARD_H_METRICS = 76
+export const METRIC_ROW = 22
+/** @deprecated the height of a card with one metrics row; use `cardHeightOf`. */
+export const CARD_H_METRICS = CARD_H + METRIC_ROW
 
 export type Card<N extends string = string> = {
   name: N
@@ -23,25 +26,30 @@ export type Card<N extends string = string> = {
   up: string | null
   /** Series name whose last value is printed in the card's bottom-right corner (a load, a rate). */
   value?: string
-  /** Up to two labelled values on a third row (`cpu 24%`, `mem 63%`); labels of at most four characters,
-   * values that fit `212 B/s`. Any card with metrics makes every card on the map taller. */
+  /** Up to four labelled values in rows of two (`cpu 24%`, `mem 63%`); labels of at most four characters.
+   * The card with the most metrics sets the height of every card on the map. */
   metrics?: ReadonlyArray<{ label: string; series: string }>
 }
-/** How tall the cards of a map are: taller as soon as one of them carries metrics. */
+/** How tall the cards of a map are: a row of 22 px per two metrics on the fullest card. */
 export const cardHeightOf = (cards: ReadonlyArray<Card<string>>): number =>
-  cards.some((card) => card.metrics && card.metrics.length > 0) ? CARD_H_METRICS : CARD_H
+  CARD_H + METRIC_ROW * Math.ceil(Math.max(0, ...cards.map((card) => card.metrics?.length ?? 0)) / 2)
 
 /** The box around a set of cards: `pad` on three sides and room for the label on top. */
 export const groupAround = (
   label: string,
   cards: ReadonlyArray<Card<string>>,
-  { pad = 20, labelHeight = 32, cardHeight }: { pad?: number; labelHeight?: number; cardHeight?: number } = {},
+  {
+    pad = 20,
+    labelHeight = 32,
+    cardHeight,
+    cardWidth = CARD_W,
+  }: { pad?: number; labelHeight?: number; cardHeight?: number; cardWidth?: number } = {},
 ): Group => {
   if (cards.length === 0) throw new Error(`group ${label} has no cards`)
   const h = cardHeight ?? cardHeightOf(cards)
   const left = Math.min(...cards.map((c) => c.left))
   const top = Math.min(...cards.map((c) => c.top))
-  const right = Math.max(...cards.map((c) => c.left + CARD_W))
+  const right = Math.max(...cards.map((c) => c.left + cardWidth))
   const bottom = Math.max(...cards.map((c) => c.top + h))
   return {
     left: left - pad,
@@ -133,7 +141,7 @@ type Anchor = Point
 type Endpoint = { p: Point; side: Side | null; name: string | null; anchor: Anchor }
 
 /** Where an end sits (px) and how the connection attaches there: Grafana's anchor space runs from -1 to 1, y=1 is up. */
-function endpoint<N extends string>(end: End<N>, cards: ReadonlyMap<N, Card<N>>, h: number): Endpoint {
+function endpoint<N extends string>(end: End<N>, cards: ReadonlyMap<N, Card<N>>, w: number, h: number): Endpoint {
   if ("x" in end) return { p: { x: end.x, y: end.y }, side: null, name: null, anchor: { x: 0, y: 0 } }
   const card = cards.get(end.card)
   if (!card) throw new Error(`unknown card ${end.card}`)
@@ -141,14 +149,14 @@ function endpoint<N extends string>(end: End<N>, cards: ReadonlyMap<N, Card<N>>,
   switch (end.side) {
     case "top":
       return {
-        p: { x: card.left + at * CARD_W, y: card.top },
+        p: { x: card.left + at * w, y: card.top },
         side: "top",
         name: end.card,
         anchor: { x: 2 * at - 1, y: 1 },
       }
     case "bottom":
       return {
-        p: { x: card.left + at * CARD_W, y: card.top + h },
+        p: { x: card.left + at * w, y: card.top + h },
         side: "bottom",
         name: end.card,
         anchor: { x: 2 * at - 1, y: -1 },
@@ -162,7 +170,7 @@ function endpoint<N extends string>(end: End<N>, cards: ReadonlyMap<N, Card<N>>,
       }
     case "right":
       return {
-        p: { x: card.left + CARD_W, y: card.top + at * h },
+        p: { x: card.left + w, y: card.top + at * h },
         side: "right",
         name: end.card,
         anchor: { x: 1, y: 1 - 2 * at },
@@ -182,7 +190,7 @@ const crosses = (s: Segment, b: Box) => {
   return x1 < b.left + b.width && x2 > b.left && y1 < b.top + b.height && y2 > b.top
 }
 
-export type MapOptions = { palette?: Palette; maxLineWidth?: number }
+export type MapOptions = { palette?: Palette; maxLineWidth?: number; cardWidth?: number }
 
 /** Renders groups, knots, cards and values to Canvas elements (in that z-order; the first lies at the
  * bottom); the lines are connections on the elements they start from. `N` is the union of card names,
@@ -192,10 +200,10 @@ export function drawMap<N extends string>(
   cards: ReadonlyArray<Card<N>>,
   lines: ReadonlyArray<Line<NoInfer<N>>>,
   bars: readonly Bar[] = [],
-  { palette: ink = DARK, maxLineWidth = 8 }: MapOptions = {},
+  { palette: ink = DARK, maxLineWidth = 8, cardWidth: W = CARD_W }: MapOptions = {},
 ): Json[] {
   const H = cardHeightOf(cards)
-  const boxOf = (card: Card<N>): Box => ({ left: card.left, top: card.top, width: CARD_W, height: H })
+  const boxOf = (card: Card<N>): Box => ({ left: card.left, top: card.top, width: W, height: H })
   // Two cards on top of each other is a layout mistake, and this is the place it is cheapest to find.
   cards.forEach((a, i) => {
     for (const b of cards.slice(i + 1)) {
@@ -268,8 +276,8 @@ export function drawMap<N extends string>(
   }
   const values: Json[] = []
   lines.forEach((line, i) => {
-    const from = endpoint(line.from, byName, H)
-    const to = endpoint(line.to, byName, H)
+    const from = endpoint(line.from, byName, W, H)
+    const to = endpoint(line.to, byName, W, H)
     const segments = route(from.p, from.side, to.p, to.side, line.via, line.series)
     // A line may touch the two cards it joins and nothing else: a segment through another card is a
     // layout mistake, found here rather than on screen.
@@ -320,22 +328,24 @@ export function drawMap<N extends string>(
         card.name,
         card.left,
         card.top,
-        CARD_W,
+        W,
         H,
         { color: { fixed: ink.card } },
         { color: { fixed: ink.cardBorder }, width: 1, radius: 8 },
       ),
       connections: connectionsOf.get(card.name) ?? [],
     })
-    // The metrics row: two slots of 70 px, each a short label (four characters) and a value with room for
-    // `212 B/s`; a longer label is cut, so keep them to `cpu`, `mem`, `req`, `q/s`.
-    ;(card.metrics ?? []).slice(0, 2).forEach((metric, k) => {
-      const x = card.left + 10 + k * 70
-      cardElements.push(text(`metric-label-${card.name}-${k}`, x, card.top + 54, 28, 16, metric.label, 10, ink.label))
+    // The metrics rows: two slots per row across the card, each a short label (four characters) and a
+    // value; the slot grows with the card width, so wide cards fit `275 kB/s`.
+    const slot = (W - 20) / 2
+    ;(card.metrics ?? []).slice(0, 4).forEach((metric, k) => {
+      const x = card.left + 10 + (k % 2) * slot
+      const y = card.top + CARD_H + 2 + Math.floor(k / 2) * METRIC_ROW
+      cardElements.push(text(`metric-label-${card.name}-${k}`, x, y, 28, 16, metric.label, 10, ink.label))
       cardElements.push({
         type: "metric-value",
         name: `metric-${card.name}-${k}`,
-        ...place(x + 30, card.top + 54, 40, 16),
+        ...place(x + 30, y, slot - 30, 16),
         config: {
           text: { field: metric.series, mode: "field" },
           size: 11,
@@ -347,21 +357,11 @@ export function drawMap<N extends string>(
         border: { color: { fixed: "transparent" }, width: 0 },
       })
     })
-    cardElements.push({
-      type: "icon",
-      name: `icon-${card.name}`,
-      ...place(card.left + 12, card.top + 14, 24, 24),
-      config: { path: { fixed: card.icon, mode: "fixed" }, fill: { fixed: ink.icon } },
-    })
-    cardElements.push(
-      text(`title-${card.name}`, card.left + 46, card.top + 7, CARD_W - 60, 20, card.title, 13, ink.title),
-    )
-    cardElements.push(text(`sub-${card.name}`, card.left + 46, card.top + 27, CARD_W - 52, 18, card.sub, 10, ink.muted))
     if (card.value) {
       cardElements.push({
         type: "metric-value",
         name: `value-${card.name}`,
-        ...place(card.left + CARD_W - 62, card.top + CARD_H - 22, 54, 16),
+        ...place(card.left + W - 62, card.top + CARD_H - 22, 54, 16),
         // the corner value sits on the second line, whatever the card height
         config: {
           text: { field: card.value, mode: "field" },
@@ -378,7 +378,7 @@ export function drawMap<N extends string>(
       cardElements.push({
         type: "ellipse",
         name: `up-${card.name}`,
-        ...place(card.left + CARD_W - 18, card.top + 8, 8, 8),
+        ...place(card.left + W - 18, card.top + 8, 8, 8),
         config: { text: { fixed: "" }, size: 8, align: "center", valign: "middle", color: { fixed: "transparent" } },
         background: { color: { field: `up:${card.name}` } },
         border: { color: { fixed: "transparent" }, width: 0 },
