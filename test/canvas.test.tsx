@@ -27,6 +27,34 @@ const knots = (elements: unknown[]) =>
   elements.filter((e) => typeof e === "object" && e !== null && String(Reflect.get(e, "name")).startsWith("knot"))
     .length
 
+describe("values on lines", () => {
+  test("a value that lands on another line, or on another value, is an error", () => {
+    // two parallel lines 20 px apart: the upper value box (20 px, 9 px above its line) covers the lower line
+    const near = [
+      { name: "a", left: 0, top: 0, title: "A", sub: "", icon: "img/x.svg", up: null },
+      { name: "b", left: 400, top: 0, title: "B", sub: "", icon: "img/x.svg", up: null },
+    ] as const satisfies ReadonlyArray<Card>
+    expect(() =>
+      drawMap([], near, [
+        { from: { card: "a", side: "right", at: 0.3 }, to: { card: "b", side: "left", at: 0.3 }, series: "one" },
+        { from: { card: "a", side: "right", at: 0.7 }, to: { card: "b", side: "left", at: 0.7 }, series: "two" },
+      ]),
+    ).toThrow(/lands on the line of|overlap/)
+    // far enough apart (two card heights): both values fit
+    const far = [
+      near[0],
+      { ...near[1], top: 0 },
+      { name: "c", left: 400, top: 200, title: "C", sub: "", icon: "img/x.svg", up: null },
+    ] as const
+    expect(() =>
+      drawMap([], far, [
+        { from: { card: "a", side: "right", at: 0.3 }, to: { card: "b", side: "left", at: 0.3 }, series: "one" },
+        { from: { card: "a", side: "bottom" }, to: { card: "c", side: "left" }, series: "two" },
+      ]),
+    ).not.toThrow()
+  })
+})
+
 describe("router", () => {
   test("ends that line up: one connection, no knot", () => {
     const els = drawMap([], cards, [
