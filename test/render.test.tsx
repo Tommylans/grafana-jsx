@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import {
   col,
+  colorsFor,
   Dashboard,
   h,
   postgres,
@@ -8,6 +9,7 @@ import {
   promql,
   Row,
   renderDashboard,
+  Section,
   Stat,
   sql,
   TimeSeries,
@@ -96,5 +98,180 @@ describe("panels", () => {
   test("children as an attribute count too", () => {
     const { json } = renderDashboard(<Dashboard file="a.json" title="A" uid="a" children={[stat("one")]} />)
     expect(Array.isArray(json.panels) ? json.panels.length : 0).toBe(1)
+  })
+})
+
+describe("sections", () => {
+  test("a section is a row panel one line high, its children below it, ids and y in reading order", () => {
+    const { json } = renderDashboard(
+      <Dashboard file="a.json" title="A" uid="a">
+        {stat("before")}
+        <Section title="Now">
+          <Row>
+            {stat("one")}
+            {stat("two")}
+          </Row>
+        </Section>
+        <Section title="Later">
+          <TimeSeries title="three" unit="short" queries={[promql(PROM, "up")]} />
+        </Section>
+      </Dashboard>,
+    )
+    const panels = json.panels
+    if (!Array.isArray(panels)) throw new Error("no panels")
+    const placed = panels.map((p) =>
+      typeof p === "object" && p && !Array.isArray(p) ? [p.id, p.type, p.title, p.gridPos] : null,
+    )
+    expect(placed).toEqual([
+      [1, "stat", "before", { h: 4, w: 4, x: 0, y: 0 }],
+      [2, "row", "Now", { h: 1, w: 24, x: 0, y: 4 }],
+      [3, "stat", "one", { h: 4, w: 4, x: 0, y: 5 }],
+      [4, "stat", "two", { h: 4, w: 4, x: 4, y: 5 }],
+      [5, "row", "Later", { h: 1, w: 24, x: 0, y: 9 }],
+      [6, "timeseries", "three", { h: 8, w: 12, x: 0, y: 10 }],
+    ])
+    const head = panels[1]
+    expect(head && typeof head === "object" && !Array.isArray(head) ? head.collapsed : null).toBe(false)
+  })
+  test("sections do not nest", () => {
+    expect(() =>
+      renderDashboard(
+        <Dashboard file="a.json" title="A" uid="a">
+          <Section title="outer">
+            <Section title="inner">{stat("one")}</Section>
+          </Section>
+        </Dashboard>,
+      ),
+    ).toThrow(/do not nest/)
+  })
+})
+
+describe("color and emphasis", () => {
+  test("a stat colors by thresholds, fills its background and draws a sparkline when asked", () => {
+    const { json } = renderDashboard(
+      <Dashboard file="a.json" title="A" uid="a">
+        <Stat
+          title="room"
+          unit="percent"
+          query={sql(DB, "select 1")}
+          thresholds={[
+            { color: "red", value: null },
+            { color: "green", value: 20 },
+          ]}
+          background
+          sparkline
+        />
+      </Dashboard>,
+    )
+    const first = Array.isArray(json.panels) ? json.panels[0] : null
+    expect(first).toMatchObject({
+      fieldConfig: {
+        defaults: {
+          thresholds: {
+            mode: "absolute",
+            steps: [
+              { color: "red", value: null },
+              { color: "green", value: 20 },
+            ],
+          },
+        },
+      },
+      options: { graphMode: "area", colorMode: "background" },
+    })
+    expect(() =>
+      renderDashboard(
+        <Dashboard file="a.json" title="A" uid="a">
+          <Stat
+            title="x"
+            unit="short"
+            query={sql(DB, "select 1")}
+            color="blue"
+            thresholds={[{ color: "red", value: null }]}
+          />
+        </Dashboard>,
+      ),
+    ).toThrow(/thresholds or color/)
+  })
+  test("a time series legend can be a table with values, and thresholds draw reference lines", () => {
+    const { json } = renderDashboard(
+      <Dashboard file="a.json" title="A" uid="a">
+        <TimeSeries
+          title="x"
+          unit="percent"
+          queries={[promql(PROM, "up")]}
+          legend="table"
+          legendValues={["last", "max"]}
+          thresholds={[
+            { color: "transparent", value: null },
+            { color: "red", value: 100 },
+          ]}
+          thresholdStyle="line"
+          points
+        />
+        <TimeSeries title="y" unit="percent" queries={[promql(PROM, "up")]} legend="hidden" />
+      </Dashboard>,
+    )
+    const [x, y] = Array.isArray(json.panels) ? json.panels : []
+    expect(x).toMatchObject({
+      options: { legend: { displayMode: "table", showLegend: true, calcs: ["lastNotNull", "max"] } },
+      fieldConfig: { defaults: { custom: { thresholdsStyle: { mode: "line" }, showPoints: "always" } } },
+    })
+    expect(y).toMatchObject({ options: { legend: { showLegend: false, calcs: [] } } })
+    const ySeen = y && typeof y === "object" && !Array.isArray(y) ? y.fieldConfig : null
+    expect(JSON.stringify(ySeen)).not.toContain("thresholdsStyle")
+  })
+  test("a column can be a gauge or a colored cell by its thresholds; a cell without a color is an error", () => {
+    expect(
+      col("week", {
+        unit: "percent",
+        cell: "gauge",
+        min: 0,
+        max: 100,
+        thresholds: [
+          { color: "green", value: null },
+          { color: "red", value: 90 },
+        ],
+      }),
+    ).toEqual({
+      matcher: { id: "byName", options: "week" },
+      properties: [
+        { id: "unit", value: "percent" },
+        { id: "custom.cellOptions", value: { type: "gauge", mode: "gradient", valueDisplayMode: "text" } },
+        {
+          id: "thresholds",
+          value: {
+            mode: "absolute",
+            steps: [
+              { color: "green", value: null },
+              { color: "red", value: 90 },
+            ],
+          },
+        },
+        { id: "min", value: 0 },
+        { id: "max", value: 100 },
+        { id: "color", value: { mode: "thresholds" } },
+      ],
+    })
+    expect(col("state", { cell: "background", color: "blue", values: { "1": { text: "on" } } }).properties).toEqual([
+      { id: "custom.cellOptions", value: { type: "color-background", mode: "gradient" } },
+      { id: "color", value: { mode: "fixed", fixedColor: "blue" } },
+      { id: "mappings", value: [{ type: "value", options: { "1": { index: 0, text: "on" } } }] },
+    ])
+    expect(() => col("x", { cell: "text" })).toThrow(/needs thresholds or a color/)
+    expect(() => col("x", { color: "blue", thresholds: [{ color: "red", value: null }] })).toThrow(
+      /thresholds or color/,
+    )
+  })
+  test("colorsFor hands out the palette in order and refuses a thirteenth name", () => {
+    expect(colorsFor(["a", "b", "c"])).toEqual([
+      ["a", "blue"],
+      ["b", "orange"],
+      ["c", "green"],
+    ])
+    expect(colorsFor(["a", "b"], ["red", "green"])).toEqual([
+      ["a", "red"],
+      ["b", "green"],
+    ])
+    expect(() => colorsFor(Array.from({ length: 13 }, (_, i) => `s${i}`))).toThrow(/13 names/)
   })
 })
