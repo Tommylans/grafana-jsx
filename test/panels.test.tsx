@@ -87,6 +87,16 @@ describe("the newer panel types", () => {
     expect(gauge?.fieldConfig).toMatchObject({ defaults: { displayName: "${__field.labels.pod}", unit: "short" } })
   })
 
+  test("the key null maps the missing value as a special mapping, after the values", () => {
+    expect(valueMap({ "1": { text: "on" }, null: { text: "", color: "transparent" } })).toEqual([
+      { type: "value", options: { "1": { index: 0, text: "on" } } },
+      { type: "special", options: { match: "null", result: { index: 1, text: "", color: "transparent" } } },
+    ])
+    expect(valueMap({ null: { color: "transparent" } })).toEqual([
+      { type: "special", options: { match: "null", result: { index: 0, color: "transparent" } } },
+    ])
+  })
+
   test("value mappings number the entries in the order JavaScript keeps them", () => {
     expect(valueMap({ up: { text: "running", color: "green" }, down: { text: "stopped" } })).toEqual([
       {

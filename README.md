@@ -57,7 +57,7 @@ component claims (add hand-written ones to `keep`).
   a `PanelNode` through the exported `panel()` helper. `thresholds`, `valueMap`, `byName` and `col` are
   the small shared pieces of field config: `col("week", { unit: "percent", cell: "gauge", min: 0, max:
   100, thresholds })` is a bar behind the number, `cell: "background"` or `"text"` color the cell, and
-  `values` maps exact values to a text and color.
+  `values` maps exact values to a text and color (the key `null` is the missing value: `{ null: { color: "transparent" } }` keeps an empty colored cell blank).
 - **One color per entity** — `colorsFor(["tijn", "tom"])` hands out `PALETTE` (twelve of Grafana's named
   colors) in order; the same list on every panel keeps an account, a node or a model the same color
   wherever it shows up, which a per-panel palette never does. More names than colors is an error, not

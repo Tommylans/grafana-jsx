@@ -17,20 +17,24 @@ export type Common = {
 export type Step = { color: string; value: number | null }
 export const thresholds = (steps: Step[]): JsonObject => ({ mode: "absolute", steps })
 
-/** What a value shows as: a text and/or a color per exact value (`"0": { text: "down", color: "red" }`). */
+/** What a value shows as: a text and/or a color per exact value (`"0": { text: "down", color: "red" }`); the key
+ * `null` is the missing value (an empty cell, a gap), for a table whose colored cells must stay blank without one. */
 export type ValueMap = Record<string, { text?: string; color?: string }>
 /** Grafana's value mappings from a `ValueMap`; ranges and regexes stay hand-written overrides. */
-export const valueMap = (map: ValueMap): JsonObject[] => [
-  {
-    type: "value",
-    options: Object.fromEntries(
-      Object.entries(map).map(([value, { text, color }], index) => [
-        value,
-        { index, ...(text === undefined ? {} : { text }), ...(color === undefined ? {} : { color }) },
-      ]),
-    ),
-  },
-]
+export const valueMap = (map: ValueMap): JsonObject[] => {
+  const shown = ({ text, color }: { text?: string; color?: string }, index: number): JsonObject => ({
+    index,
+    ...(text === undefined ? {} : { text }),
+    ...(color === undefined ? {} : { color }),
+  })
+  const values = Object.entries(map).filter(([value]) => value !== "null")
+  const mappings: JsonObject[] = values.length
+    ? [{ type: "value", options: Object.fromEntries(values.map(([value, how], index) => [value, shown(how, index)])) }]
+    : []
+  const missing = map.null
+  if (missing) mappings.push({ type: "special", options: { match: "null", result: shown(missing, values.length) } })
+  return mappings
+}
 
 export const LEGEND_BOTTOM: JsonObject = { displayMode: "list", placement: "bottom", showLegend: true }
 export const TOOLTIP_SINGLE: JsonObject = { mode: "single", sort: "none" }
