@@ -266,6 +266,7 @@ export function drawMap<N extends string>(
     )
   }
   const values: Json[] = []
+  const placed: { series: string; segments: Segment[]; box: Box }[] = []
   lines.forEach((line, i) => {
     const from = endpoint(line.from, byName, W, H)
     const to = endpoint(line.to, byName, W, H)
@@ -298,6 +299,7 @@ export function drawMap<N extends string>(
     for (const card of cards) {
       if (overlaps(box, boxOf(card))) throw new Error(`the value of "${line.series}" lands on card ${card.name}`)
     }
+    placed.push({ series: line.series, segments, box })
     values.push({
       type: "metric-value",
       name: `value${i}`,
@@ -313,6 +315,18 @@ export function drawMap<N extends string>(
       border: { color: { fixed: ink.cardBorder }, width: 1, radius: 4 },
     })
   })
+  // A value box on another line's path, or on another value, is as unreadable as one on a card:
+  // parallel lines closer together than a value box (20 px, 9 px above a horizontal segment) put
+  // each value on its neighbour. Found here, so the map gets more room instead of a screenshot.
+  for (const a of placed) {
+    for (const b of placed) {
+      if (a === b) continue
+      if (b.segments.some((segment) => crosses(segment, a.box)))
+        throw new Error(`the value of "${a.series}" lands on the line of "${b.series}"`)
+      if (a.series < b.series && overlaps(a.box, b.box))
+        throw new Error(`the values of "${a.series}" and "${b.series}" overlap`)
+    }
+  }
   const cardElements: Json[] = []
   for (const card of cards) {
     cardElements.push({
