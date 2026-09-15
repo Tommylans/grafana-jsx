@@ -71,14 +71,19 @@ describe("layout", () => {
 })
 
 describe("panels", () => {
-  test("one panel, one datasource", () => {
-    expect(() =>
-      renderDashboard(
-        <Dashboard file="a.json" title="A" uid="a">
-          <Table title="x" queries={[sql(DB, "select 1"), promql(PROM, "up")]} />
-        </Dashboard>,
-      ),
-    ).toThrow(/Mixed/)
+  test("targets on different datasources make the panel Mixed", () => {
+    const { json } = renderDashboard(
+      <Dashboard file="m.json" title="M" uid="m">
+        <TimeSeries title="mixed" unit="short" queries={[promql(PROM, "up"), sql(DB, "select 1")]} />
+      </Dashboard>,
+    )
+    const panels = json.panels
+    if (!Array.isArray(panels)) throw new Error("no panels")
+    const panel = panels[0]
+    expect(typeof panel === "object" && panel && !Array.isArray(panel) ? panel.datasource : null).toEqual({
+      type: "datasource",
+      uid: "-- Mixed --",
+    })
   })
   test("column formatting comes in a fixed order, only what is set", () => {
     expect(col("cost", { width: 90, unit: "currencyUSD" })).toEqual({

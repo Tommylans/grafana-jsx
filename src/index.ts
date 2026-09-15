@@ -56,6 +56,7 @@ export {
   LAST,
   LEGEND_BOTTOM,
   linkTo,
+  MIXED,
   P50_P90,
   panel,
   type Step,

@@ -74,14 +74,15 @@ export const P50_P90: Colors = [
   ["p90", "orange"],
 ]
 
-/** The datasource a panel is bound to: that of its targets, which must all agree. */
+/** Grafana's own "-- Mixed --" datasource: the panel's targets each name their own. */
+export const MIXED: Datasource = { type: "datasource", uid: "-- Mixed --" }
+
+/** The datasource a panel is bound to: that of its targets when they agree, `MIXED` when they do not
+ * (every target carries its own datasource, so Grafana routes each one itself). */
 export const datasourceOf = (targets: Target[]): Datasource => {
   const first = targets[0]?.datasource
   if (!first) throw new Error("a panel without a query")
-  if (targets.some((target) => target.datasource.uid !== first.uid)) {
-    throw new Error("one panel, one datasource (Grafana wants `-- Mixed --` otherwise)")
-  }
-  return first
+  return targets.some((target) => target.datasource.uid !== first.uid) ? MIXED : first
 }
 
 export const panel = (w: number, h: number, body: (id: number, x: number, y: number) => PanelJson): PanelNode => ({
