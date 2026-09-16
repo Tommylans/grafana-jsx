@@ -94,6 +94,14 @@ describe("router", () => {
     expect(vertices).toHaveLength(2)
     expect(vertices[0].y).toBeLessThan(0) // above the top edge of the cards (y=0)
   })
+  test("ends a few pixels out of line are drawn straight, not as a kink", () => {
+    const els = drawMap(
+      [],
+      [cards[0], { ...cards[1], top: 5 }],
+      [{ from: { card: "a", side: "right" }, to: { card: "b", side: "left" }, series: "s" }],
+    )
+    expect(connectionsOf(els, "a")[0]).not.toHaveProperty("vertices")
+  })
   test("flow off draws solid lines", () => {
     const els = drawMap(
       [],
