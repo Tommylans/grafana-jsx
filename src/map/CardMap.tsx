@@ -29,8 +29,9 @@ export type CardMapProps<N extends string> = Omit<Common, "h"> &
   }
 
 /** Grafana draws a row as 30 px plus an 8 px gutter (`38h - 8` px for `h` rows); the title bar takes 40 px
- * of that and the border 2 px (measured in PanelChrome on 13.1: no title means no header at all). */
-const rowsFor = (px: number, titled: boolean) => Math.ceil((px + (titled ? 50 : 10)) / 38)
+ * of that and the border 2 px (measured in PanelChrome on 13.1: no title means no header at all), plus
+ * 4 px of slack so a drawing that fits exactly does not lose its bottom border to a rounding. */
+const rowsFor = (px: number, titled: boolean) => Math.ceil((px + (titled ? 54 : 14)) / 38)
 
 export function CardMap<N extends string>({
   title,

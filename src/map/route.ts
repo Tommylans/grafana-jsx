@@ -10,6 +10,9 @@ const vertical = (side: Side) => side === "top" || side === "bottom"
 
 /** How far a Z between two equal sides swings out beyond the cards. */
 export const OUT = 16
+/** A Z whose middle segment is shorter than this is drawn as one straight line: two corners a few
+ * pixels apart render as a kink that means nothing (the ends are a hair out of line, not offset). */
+const KINK = 8
 
 /** Is coordinate `c` on the outward side of point `p` on `side`? A loose point has no outward side. */
 const outward = (p: Point, side: Side | null, c: number) =>
@@ -26,8 +29,8 @@ export function route(
   via: number | undefined,
   series: string,
 ): Segment[] {
-  const alignedX = Math.abs(a.x - b.x) < 1
-  const alignedY = Math.abs(a.y - b.y) < 1
+  const alignedX = Math.abs(a.x - b.x) < KINK
+  const alignedY = Math.abs(a.y - b.y) < KINK
   if (alignedX || alignedY) {
     if (via !== undefined) throw new Error(`${series}: via on a straight line`)
     return [{ a, b }]
