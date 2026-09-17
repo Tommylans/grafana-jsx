@@ -14,6 +14,10 @@ export type BarGaugeProps = Common & {
   nameOnTop?: boolean
 }
 
+/** A Loki instant query comes back as one frame with a row per series (a Prometheus instant vector as one
+ * frame per series), so the reducer must keep every row or the panel shows a single bar. */
+const rowPerSeries = (query: Target) => query.datasource.type === "loki" && query.json.queryType === "instant"
+
 /** Horizontal gauges, one per series. */
 export const BarGauge = ({
   title,
@@ -50,7 +54,7 @@ export const BarGauge = ({
           valueMode: "color",
           namePlacement: nameOnTop ? "top" : "left",
           sizing: "auto",
-          reduceOptions: { calcs: ["lastNotNull"], fields: "", values: false },
+          reduceOptions: { calcs: ["lastNotNull"], fields: "", values: rowPerSeries(query) },
         },
         targets: [query.json],
       },

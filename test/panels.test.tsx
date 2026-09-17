@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import {
+  BarGauge,
   customVariable,
   Dashboard,
   fieldValues,
@@ -104,6 +105,25 @@ describe("the newer panel types", () => {
         options: { up: { index: 0, text: "running", color: "green" }, down: { index: 1, text: "stopped" } },
       },
     ])
+  })
+})
+
+describe("BarGauge", () => {
+  test("keeps every row for a Loki instant query, reduces a Prometheus vector per series", () => {
+    const [prom, lokiTop] = panelsOf(
+      <Dashboard file="b.json" title="B" uid="b">
+        <BarGauge title="prom" query={up} unit="short" />
+        <BarGauge
+          title="loki"
+          query={logql(loki("loki"), 'topk(3, sum by (pod) (count_over_time({a="b"} [$__range])))', {
+            type: "instant",
+          })}
+          unit="short"
+        />
+      </Dashboard>,
+    )
+    expect(prom?.options).toMatchObject({ reduceOptions: { values: false } })
+    expect(lokiTop?.options).toMatchObject({ reduceOptions: { values: true } })
   })
 })
 
