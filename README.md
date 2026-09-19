@@ -85,8 +85,8 @@ component claims (add hand-written ones to `keep`).
   comes along unless `keepTime` is off, so the target opens on the same moment. `linkToValue(title,
   base, path)` appends the cell's own value to a URL outside Grafana.
 - **One color per entity** — `colorsFor(["tijn", "tom"])` hands out `PALETTE` (twelve of Grafana's named
-  colors) in order; the same list on every panel keeps an account, a node or a model the same color
-  wherever it shows up, which a per-panel palette never does. More names than colors is an error, not
+  colors) in order; the same list as `colors` on every `<TimeSeries>` and `<BarGauge>` keeps an account,
+  a node or a model the same color wherever it shows up, which a per-panel palette never does. More names than colors is an error, not
   a thirteenth hue: that panel wants a facet or an "other" bucket.
 - **Dashboard-level** — `queryVariable`, `customVariable`, `intervalVariable`, `textboxVariable` and
   `datasourceVariable` build the template variables (`ref("name")` is `$name` for a query);
