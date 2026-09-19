@@ -63,6 +63,18 @@ export const calculateField = (
   },
 })
 
+/** Keeps only the rows where `field` has a value (`isNotNull`, the default) or lacks one. After an
+ * outer `joinByField` this is what turns the join into a left join: the frame that has the field
+ * decides which rows stay, the others only fill in what they know. */
+export const filterByValue = (field: string, { present = true }: { present?: boolean } = {}): Transformation => ({
+  id: "filterByValue",
+  options: {
+    type: "include",
+    match: "all",
+    filters: [{ fieldName: field, config: { id: present ? "isNotNull" : "isNull", options: {} } }],
+  },
+})
+
 /** Sorts the rows by one column. Grafana keeps a list but reads only the first entry. */
 export const sortBy = (field: string, desc = false): Transformation => ({
   id: "sortBy",
