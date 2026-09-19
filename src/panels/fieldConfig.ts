@@ -1,7 +1,10 @@
 // What every panel component shares: the common props, the JSON head of a panel, the row/panel
 // node builders, and the small helpers for colors, columns and links.
+import { GRID } from "../core/layout.ts"
 import type { Json, JsonObject, PanelJson, PanelNode } from "../core/node.ts"
+import type { DataLink } from "../dashboard/links.ts"
 import type { Datasource, Target } from "../query/datasource.ts"
+import type { Transformation } from "../query/transforms.ts"
 
 export type Common = {
   title: string
@@ -11,6 +14,24 @@ export type Common = {
   /** The name every series shows as, Grafana's `displayName` template: `${__field.labels.pod}` names a
    * series after a label, which is how a series gets its name when a datasource ignores `legendFormat`. */
   display?: string
+  /** Repeat the panel per value of this dashboard variable, side by side, as many per row as fit `w`. */
+  repeat?: string
+  /** Where a value on this panel leads: `linkTo(uid, …)`, `linkToValue(…)`. */
+  links?: DataLink[]
+  /** Reshapes the query result before the panel draws it: `joinByField`, `organize`, `timeSeriesTable`, … */
+  transformations?: Transformation[]
+}
+
+/** What a panel hands to `withCommon`: the shared props it was given, plus the width the layout gave
+ * it (the width decides how many repeated copies fit on a line). Spelled out with `| undefined`
+ * because a destructured prop is always present, only its value may be missing. */
+export type Shared = {
+  description?: string | undefined
+  display?: string | undefined
+  repeat?: string | undefined
+  links?: DataLink[] | undefined
+  transformations?: Transformation[] | undefined
+  w: number
 }
 
 /** One threshold step: `value: null` is the base color below every other step. */
@@ -76,21 +97,27 @@ export const colorsFor = (names: ReadonlyArray<string>, palette: ReadonlyArray<s
   return names.map((name, index) => [name, palette[index] as string] as const)
 }
 
-/** How a table cell shows its value: a bar behind the number, the cell's background colored, or the
- * text colored; all three color by the column's `thresholds`. */
-export type Cell = "gauge" | "lcd" | "background" | "text"
+/** How a table cell shows its value: a bar behind the number, the cell's background colored, the text
+ * colored — those three color by the column's `thresholds` — or, for a column holding a whole series,
+ * that series drawn as a sparkline. */
+export type Cell = "gauge" | "lcd" | "background" | "text" | "sparkline"
 const CELL_OPTIONS: Record<Cell, JsonObject> = {
   gauge: { type: "gauge", mode: "gradient", valueDisplayMode: "text" },
   lcd: { type: "gauge", mode: "lcd", valueDisplayMode: "text" },
   background: { type: "color-background", mode: "gradient" },
   text: { type: "color-text" },
+  // The sparkline cell takes the time series panel's own line options; filled, because a bare line in
+  // a table row reads as noise.
+  sparkline: { type: "sparkline", drawStyle: "line", lineWidth: 1, fillOpacity: 20, showPoints: "never" },
 }
+/** The cells that draw the column's `thresholds`; a sparkline colors itself. */
+const COLORED: ReadonlyArray<Cell> = ["gauge", "lcd", "background", "text"]
 
 export type ColProps = {
   unit?: string
   decimals?: number
   width?: number
-  links?: Json[]
+  links?: DataLink[]
   hidden?: boolean
   display?: string
   /** A colored cell; needs `thresholds` (or a `color`) to say which color. */
@@ -109,7 +136,7 @@ const COL_PROPERTY: ReadonlyArray<[keyof ColProps, string, (value: never) => Jso
   ["unit", "unit", (value: string) => value],
   ["decimals", "decimals", (value: number) => value],
   ["width", "custom.width", (value: number) => value],
-  ["links", "links", (value: Json[]) => value],
+  ["links", "links", (value: DataLink[]) => value],
   ["hidden", "custom.hidden", (value: boolean) => value],
   ["display", "displayName", (value: string) => value],
   ["cell", "custom.cellOptions", (value: Cell) => CELL_OPTIONS[value]],
@@ -123,7 +150,7 @@ const COL_PROPERTY: ReadonlyArray<[keyof ColProps, string, (value: never) => Jso
 export const col = (name: string, props: ColProps): JsonObject => {
   if (props.thresholds && props.color)
     throw new Error(`column ${name}: choose thresholds or color, a fixed color disables the thresholds`)
-  if (props.cell && !props.thresholds && !props.color)
+  if (props.cell && COLORED.includes(props.cell) && !props.thresholds && !props.color)
     throw new Error(`column ${name}: a ${props.cell} cell needs thresholds or a color`)
   const properties = COL_PROPERTY.flatMap(([key, id, toJson]) => {
     const value = props[key]
@@ -133,12 +160,6 @@ export const col = (name: string, props: ColProps): JsonObject => {
   if (props.thresholds) properties.push({ id: "color", value: { mode: "thresholds" } })
   return { matcher: { id: "byName", options: name }, properties }
 }
-/** A clickable column: the cell value is appended to `base + path`. `${__value.raw}` is Grafana's own
- * interpolation and has to reach the JSON literally, hence no template literal. */
-export const linkTo = (title: string, base: string, path: string): Json[] => [
-  // biome-ignore lint/style/useTemplate: Grafana's own `${__value.raw}` has to stay literal
-  { title, url: `${base}${path}/` + "${__value.raw}", targetBlank: true },
-]
 
 export const P50_P90: Colors = [
   ["p50", "blue"],
@@ -180,12 +201,24 @@ export const head = (
   datasource,
 })
 
-/** Sets `description` and the series `display` name only when there is one, keeping the JSON free of empty keys. */
-export const described = (json: PanelJson, description: string | undefined, display?: string): PanelJson => {
-  const out = description ? { ...json, description } : json
-  if (display === undefined) return out
+/** The shared props onto the rendered panel: the description, the series display name, the data links,
+ * the transformations and the repeat. Only what is set reaches the JSON, so a panel that asks for
+ * nothing stays as small as it was. */
+export const withCommon = (
+  json: PanelJson,
+  { description, display, repeat, links, transformations, w }: Shared,
+): PanelJson => {
+  const defaults: JsonObject = {
+    ...json.fieldConfig.defaults,
+    ...(display === undefined ? {} : { displayName: display }),
+    ...(links === undefined ? {} : { links }),
+  }
   return {
-    ...out,
-    fieldConfig: { ...out.fieldConfig, defaults: { ...out.fieldConfig.defaults, displayName: display } },
+    ...json,
+    ...(description === undefined ? {} : { description }),
+    fieldConfig: { ...json.fieldConfig, defaults },
+    ...(transformations === undefined ? {} : { transformations }),
+    // Grafana lays repeated panels out itself: `maxPerRow` copies side by side, then the next line.
+    ...(repeat === undefined ? {} : { repeat, repeatDirection: "h", maxPerRow: Math.max(1, Math.floor(GRID / w)) }),
   }
 }

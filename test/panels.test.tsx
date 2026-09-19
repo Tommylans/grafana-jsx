@@ -1,8 +1,10 @@
 import { describe, expect, test } from "bun:test"
 import {
   BarGauge,
+  col,
   customVariable,
   Dashboard,
+  fieldLabel,
   fieldValues,
   Gauge,
   Heatmap,
@@ -10,6 +12,8 @@ import {
   h,
   Logs,
   labelValues,
+  linkTo,
+  linkToValue,
   logql,
   logsql,
   loki,
@@ -23,6 +27,7 @@ import {
   StateTimeline,
   StatusHistory,
   Text,
+  TimeSeries,
   valueMap,
   victorialogs,
 } from "../src/index.ts"
@@ -246,5 +251,36 @@ describe("logql", () => {
     const v = queryVariable({ name: "ns", datasource: loki("loki"), query: labelValues("namespace") })
     expect(v.query).toEqual({ refId: "LokiVariableQueryEditor-VariableQuery", type: 1, label: "namespace" })
     expect(labelValues("pod", '{namespace="$ns"}')).toMatchObject({ label: "pod", stream: '{namespace="$ns"}' })
+  })
+})
+
+describe("data links", () => {
+  test("a link to a dashboard fills its variables and carries the time range; a value link appends the cell", () => {
+    expect(linkTo("platform-cluster", { title: "Node", vars: { node: fieldLabel("node") } })).toEqual({
+      title: "Node",
+      url: "/d/platform-cluster?var-node=${__field.labels.node}&${__url_time_range}",
+      targetBlank: true,
+    })
+    expect(linkTo("overview", { title: "Overview", keepTime: false, newTab: false })).toEqual({
+      title: "Overview",
+      url: "/d/overview",
+      targetBlank: false,
+    })
+    expect(linkToValue("Run", "https://example.test", "/app/runs")).toEqual({
+      title: "Run",
+      url: "https://example.test/app/runs/${__value.raw}",
+      targetBlank: true,
+    })
+  })
+
+  test("links on a panel land in the field defaults, links on a column in that column's override", () => {
+    const link = linkTo("d", { title: "There", keepTime: false })
+    const panels = panelsOf(
+      <Dashboard file="l.json" title="L" uid="l">
+        <TimeSeries title="x" unit="short" queries={[up]} links={[link]} />
+      </Dashboard>,
+    )
+    expect(panels[0]?.fieldConfig).toMatchObject({ defaults: { links: [link] } })
+    expect(col("id", { links: [link] }).properties).toEqual([{ id: "links", value: [link] }])
   })
 })

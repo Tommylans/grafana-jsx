@@ -1,6 +1,6 @@
 import type { Json, JsonObject, Node } from "../core/node.ts"
 import type { Target } from "../query/datasource.ts"
-import { type Common, datasourceOf, described, head, panel } from "./fieldConfig.ts"
+import { type Common, datasourceOf, head, panel, withCommon } from "./fieldConfig.ts"
 
 export type TableProps = Common & {
   queries: Target[]
@@ -8,7 +8,9 @@ export type TableProps = Common & {
   columns?: Json[]
   sort?: { by: string; desc?: boolean }
   filterable?: boolean
-  transformations?: Json[]
+  /** Row height. A `sparkline` cell needs `md` or `lg`: in a small row the line is a few pixels tall
+   * and says nothing. */
+  rowHeight?: "sm" | "md" | "lg"
   /** Replaces the default cell formatting entirely. */
   defaults?: JsonObject
 }
@@ -17,17 +19,20 @@ export const Table = ({
   title,
   description,
   display,
+  repeat,
+  links,
+  transformations,
   w = 12,
   h = 9,
   queries,
   columns = [],
   sort,
   filterable = false,
-  transformations,
+  rowHeight = "sm",
   defaults,
 }: TableProps): Node =>
-  panel(w, h, (id, x, y) => {
-    const json = described(
+  panel(w, h, (id, x, y) =>
+    withCommon(
       {
         ...head("table", title, id, x, y, w, h, datasourceOf(queries)),
         fieldConfig: {
@@ -36,14 +41,12 @@ export const Table = ({
         },
         options: {
           showHeader: true,
-          cellHeight: "sm",
+          cellHeight: rowHeight,
           footer: { show: false },
           sortBy: sort ? [{ displayName: sort.by, desc: sort.desc ?? false }] : [],
         },
         targets: queries.map((query) => query.json),
       },
-      description,
-      display,
-    )
-    return transformations ? { ...json, transformations } : json
-  })
+      { description, display, repeat, links, transformations, w },
+    ),
+  )

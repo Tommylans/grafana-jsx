@@ -1,6 +1,6 @@
 import type { JsonObject, Node } from "../core/node.ts"
 import type { Target } from "../query/datasource.ts"
-import { type Common, described, head, panel, type Step, thresholds } from "./fieldConfig.ts"
+import { type Common, head, panel, type Step, thresholds, withCommon } from "./fieldConfig.ts"
 
 export type { Step }
 export type BarGaugeProps = Common & {
@@ -23,6 +23,9 @@ export const BarGauge = ({
   title,
   description,
   display,
+  repeat,
+  links,
+  transformations,
   w = 12,
   h = 9,
   query,
@@ -43,7 +46,7 @@ export const BarGauge = ({
       color: color ? { mode: "fixed", fixedColor: color } : { mode: "thresholds" },
       thresholds: thresholds(stepsOrColor),
     }
-    return described(
+    return withCommon(
       {
         ...head("bargauge", title, id, x, y, w, h, query.datasource),
         fieldConfig: { defaults, overrides: [] },
@@ -58,7 +61,6 @@ export const BarGauge = ({
         },
         targets: [query.json],
       },
-      description,
-      display,
+      { description, display, repeat, links, transformations, w },
     )
   })

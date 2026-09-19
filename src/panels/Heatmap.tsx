@@ -1,6 +1,6 @@
 import type { Node } from "../core/node.ts"
 import type { Target } from "../query/datasource.ts"
-import { type Common, datasourceOf, described, head, panel } from "./fieldConfig.ts"
+import { type Common, datasourceOf, head, panel, withCommon } from "./fieldConfig.ts"
 
 export type HeatmapProps = Common & {
   queries: Target[]
@@ -23,6 +23,9 @@ export const Heatmap = ({
   title,
   description,
   display,
+  repeat,
+  links,
+  transformations,
   w = 12,
   h = 8,
   queries,
@@ -34,7 +37,7 @@ export const Heatmap = ({
   cellUnit = "short",
 }: HeatmapProps): Node =>
   panel(w, h, (id, x, y) =>
-    described(
+    withCommon(
       {
         ...head("heatmap", title, id, x, y, w, h, datasourceOf(queries)),
         fieldConfig: {
@@ -66,7 +69,6 @@ export const Heatmap = ({
         },
         targets: queries.map((query) => query.json),
       },
-      description,
-      display,
+      { description, display, repeat, links, transformations, w },
     ),
   )

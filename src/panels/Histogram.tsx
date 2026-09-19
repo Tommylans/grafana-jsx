@@ -5,11 +5,11 @@ import {
   type Colors,
   type Common,
   datasourceOf,
-  described,
   head,
   LEGEND_BOTTOM,
   panel,
   TOOLTIP_SINGLE,
+  withCommon,
 } from "./fieldConfig.ts"
 
 export type HistogramProps = Common & {
@@ -27,6 +27,9 @@ export const Histogram = ({
   title,
   description,
   display,
+  repeat,
+  links,
+  transformations,
   w = 12,
   h = 8,
   queries,
@@ -36,7 +39,7 @@ export const Histogram = ({
   colors = [],
 }: HistogramProps): Node =>
   panel(w, h, (id, x, y) =>
-    described(
+    withCommon(
       {
         ...head("histogram", title, id, x, y, w, h, datasourceOf(queries)),
         fieldConfig: {
@@ -56,7 +59,6 @@ export const Histogram = ({
         },
         targets: queries.map((query) => query.json),
       },
-      description,
-      display,
+      { description, display, repeat, links, transformations, w },
     ),
   )

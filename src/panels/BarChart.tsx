@@ -1,6 +1,6 @@
 import type { Node } from "../core/node.ts"
 import type { Target } from "../query/datasource.ts"
-import { byName, type Colors, type Common, described, head, panel } from "./fieldConfig.ts"
+import { byName, type Colors, type Common, head, panel, withCommon } from "./fieldConfig.ts"
 
 export type BarChartProps = Common & {
   /** A table query; `xField` names its category column. */
@@ -15,6 +15,9 @@ export const BarChart = ({
   title,
   description,
   display,
+  repeat,
+  links,
+  transformations,
   w = 8,
   h = 8,
   query,
@@ -23,7 +26,7 @@ export const BarChart = ({
   xField = "category",
 }: BarChartProps): Node =>
   panel(w, h, (id, x, y) =>
-    described(
+    withCommon(
       {
         ...head("barchart", title, id, x, y, w, h, query.datasource),
         fieldConfig: {
@@ -46,7 +49,6 @@ export const BarChart = ({
         },
         targets: [query.json],
       },
-      description,
-      display,
+      { description, display, repeat, links, transformations, w },
     ),
   )

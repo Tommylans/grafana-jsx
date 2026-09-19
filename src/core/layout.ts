@@ -18,16 +18,18 @@ export const rowOf = (children: Children): RowNode => {
 }
 
 /** Grafana's row panel: one grid line high, full width, and Grafana folds everything below it up to the
- * next one when it is collapsed. `panels` stays empty because the children are laid out as siblings;
- * Grafana only moves them inside on collapse. */
-const sectionHead = (section: SectionNode, id: number, y: number): PanelJson => ({
+ * next one when it is collapsed. An open row keeps `panels` empty and its children are siblings; a
+ * closed one carries them inside, because that is where Grafana moves them on collapse and where it
+ * looks for them on expand. */
+const sectionHead = (section: SectionNode, id: number, y: number, held: PanelJson[]): PanelJson => ({
   type: "row",
   title: section.title,
   id,
   gridPos: { h: 1, w: GRID, x: 0, y },
   fieldConfig: { defaults: {}, overrides: [] },
-  collapsed: false,
-  panels: [],
+  collapsed: section.collapsed === true,
+  panels: held,
+  ...(section.repeat === undefined ? {} : { repeat: section.repeat }),
 })
 
 type Cursor = { id: number; y: number }
@@ -36,7 +38,17 @@ const place = (children: (PanelNode | RowNode | SectionNode)[], out: PanelJson[]
   let { id, y } = at
   for (const child of children) {
     if (child.kind === "section") {
-      out.push(sectionHead(child, ++id, y))
+      const headId = ++id
+      if (child.collapsed) {
+        // A closed section takes one line whatever it holds, and its children are laid out as if it
+        // were open: expanding it puts them back where they were designed to be.
+        const held: PanelJson[] = []
+        id = place(child.children, held, { id, y: y + 1 }).id
+        out.push(sectionHead(child, headId, y, held))
+        y += 1
+        continue
+      }
+      out.push(sectionHead(child, headId, y, []))
       ;({ id, y } = place(child.children, out, { id, y: y + 1 }))
       continue
     }

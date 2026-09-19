@@ -45,6 +45,12 @@ component claims (add hand-written ones to `keep`).
   title>`** is a titled header (Grafana's row panel, foldable by the reader) over the rows under it,
   and sections do not nest. The grid is 24 wide; a wider row is a build error. `y` and the panel ids
   follow the reading order, so an id is a place rather than a name.
+- **`repeat` and `collapsed`** — `repeat="node"` on a panel or on a `<Section>` is one copy per value
+  of that dashboard variable, so a node the autoscaler creates appears by itself; a panel fits as
+  many copies per line as its `w` allows, a section repeats everything under it and `$node` in the
+  title tells the copies apart. `<Section collapsed>` opens folded — the panels then live inside the
+  row panel, which is where Grafana keeps them, and unfolding puts them back where they were laid
+  out.
 - **Panels** — `<Stat>` (`thresholds` color the number, `background` fills the panel with that color,
   `sparkline` draws the series behind it), `<Gauge>`, `<BarGauge>`, `<TimeSeries>` (lines or bars,
   stacked, `step` for series that only get a point when something changes, `points` for sparse ones,
@@ -58,6 +64,25 @@ component claims (add hand-written ones to `keep`).
   the small shared pieces of field config: `col("week", { unit: "percent", cell: "gauge", min: 0, max:
   100, thresholds })` is a bar behind the number, `cell: "background"` or `"text"` color the cell, and
   `values` maps exact values to a text and color (the key `null` is the missing value: `{ null: { color: "transparent" } }` keeps an empty colored cell blank).
+  `cell: "sparkline"` draws a whole series inside one cell, which is what `timeSeriesTable` (below)
+  puts there; it colors itself, so it is the one cell that needs no thresholds, and it wants
+  `rowHeight="md"` or `"lg"` — in a small row the line is a few pixels tall and says nothing.
+- **Transformations** — typed, and on every panel rather than only the table: `joinByField(field)`,
+  `organize({ exclude, rename, order })`, `sortBy(field, desc)`, `calculateField(alias, { left,
+  operator, right })` or `calculateField(alias, { reduce, of })`, and `timeSeriesTable({ A: "mean" })`,
+  which turns every series of query `A` into a row — its labels as columns, its shape in the column
+  `trend("A")`. One row per node with a mini graph is therefore two lines:
+
+  ```tsx
+  <Table title="Nodes" rowHeight="lg" queries={[promql(PROM, cpu, { legend: "{{node}}" })]}
+    transformations={[timeSeriesTable({ A: "mean" })]}
+    columns={[col(trend("A"), { cell: "sparkline", width: 140 })]} />
+  ```
+- **Data links** — `links` on any panel (and on a column through `col`) says where a value leads.
+  `linkTo(uid, { title, vars })` builds the URL to another dashboard: `vars` fills its template
+  variables — `fieldLabel("node")` is the label of the series under the cursor — and the time range
+  comes along unless `keepTime` is off, so the target opens on the same moment. `linkToValue(title,
+  base, path)` appends the cell's own value to a URL outside Grafana.
 - **One color per entity** — `colorsFor(["tijn", "tom"])` hands out `PALETTE` (twelve of Grafana's named
   colors) in order; the same list on every panel keeps an account, a node or a model the same color
   wherever it shows up, which a per-panel palette never does. More names than colors is an error, not
