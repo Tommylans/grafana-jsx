@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import {
   calculateField,
+  col,
   Dashboard,
   h,
   joinByField,
@@ -77,5 +78,20 @@ describe("transformations", () => {
       [{ id: "timeSeriesTable", options: { A: { stat: "mean" } } }],
       [{ id: "sortBy", options: { sort: [{ field: "Time", desc: false }] } }],
     ])
+  })
+})
+
+describe("table cells", () => {
+  test("a sparkline column draws the series it holds and needs no color of its own", () => {
+    expect(col(trend("A"), { cell: "sparkline", width: 120 })).toEqual({
+      matcher: { id: "byName", options: "Trend #A" },
+      properties: [
+        { id: "custom.width", value: 120 },
+        {
+          id: "custom.cellOptions",
+          value: { type: "sparkline", drawStyle: "line", lineWidth: 1, fillOpacity: 20, showPoints: "never" },
+        },
+      ],
+    })
   })
 })

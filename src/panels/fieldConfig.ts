@@ -97,15 +97,21 @@ export const colorsFor = (names: ReadonlyArray<string>, palette: ReadonlyArray<s
   return names.map((name, index) => [name, palette[index] as string] as const)
 }
 
-/** How a table cell shows its value: a bar behind the number, the cell's background colored, or the
- * text colored; all three color by the column's `thresholds`. */
-export type Cell = "gauge" | "lcd" | "background" | "text"
+/** How a table cell shows its value: a bar behind the number, the cell's background colored, the text
+ * colored — those three color by the column's `thresholds` — or, for a column holding a whole series,
+ * that series drawn as a sparkline. */
+export type Cell = "gauge" | "lcd" | "background" | "text" | "sparkline"
 const CELL_OPTIONS: Record<Cell, JsonObject> = {
   gauge: { type: "gauge", mode: "gradient", valueDisplayMode: "text" },
   lcd: { type: "gauge", mode: "lcd", valueDisplayMode: "text" },
   background: { type: "color-background", mode: "gradient" },
   text: { type: "color-text" },
+  // The sparkline cell takes the time series panel's own line options; filled, because a bare line in
+  // a table row reads as noise.
+  sparkline: { type: "sparkline", drawStyle: "line", lineWidth: 1, fillOpacity: 20, showPoints: "never" },
 }
+/** The cells that draw the column's `thresholds`; a sparkline colors itself. */
+const COLORED: ReadonlyArray<Cell> = ["gauge", "lcd", "background", "text"]
 
 export type ColProps = {
   unit?: string
@@ -144,7 +150,7 @@ const COL_PROPERTY: ReadonlyArray<[keyof ColProps, string, (value: never) => Jso
 export const col = (name: string, props: ColProps): JsonObject => {
   if (props.thresholds && props.color)
     throw new Error(`column ${name}: choose thresholds or color, a fixed color disables the thresholds`)
-  if (props.cell && !props.thresholds && !props.color)
+  if (props.cell && COLORED.includes(props.cell) && !props.thresholds && !props.color)
     throw new Error(`column ${name}: a ${props.cell} cell needs thresholds or a color`)
   const properties = COL_PROPERTY.flatMap(([key, id, toJson]) => {
     const value = props[key]
@@ -154,6 +160,7 @@ export const col = (name: string, props: ColProps): JsonObject => {
   if (props.thresholds) properties.push({ id: "color", value: { mode: "thresholds" } })
   return { matcher: { id: "byName", options: name }, properties }
 }
+
 export const P50_P90: Colors = [
   ["p50", "blue"],
   ["p90", "orange"],
