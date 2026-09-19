@@ -1,6 +1,6 @@
 {
   "name": "@devv/grafana",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "Grafana dashboards as TSX components: write a dashboard as JSX, render the JSON Grafana reads, ship it as a ConfigMap, and let --check fail when a committed file drifts from its component.",
   "type": "module",
   "exports": {

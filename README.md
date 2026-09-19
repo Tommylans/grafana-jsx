@@ -68,7 +68,8 @@ component claims (add hand-written ones to `keep`).
   puts there; it colors itself, so it is the one cell that needs no thresholds, and it wants
   `rowHeight="md"` or `"lg"` — in a small row the line is a few pixels tall and says nothing.
 - **Transformations** — typed, and on every panel rather than only the table: `joinByField(field)`,
-  `organize({ exclude, rename, order })`, `sortBy(field, desc)`, `calculateField(alias, { left,
+  `organize({ exclude, rename, order })`, `sortBy(field, desc)`, `filterByValue(field)` (an outer
+  join becomes a left join: only rows where that field has a value stay), `calculateField(alias, { left,
   operator, right })` or `calculateField(alias, { reduce, of })`, and `timeSeriesTable({ A: "mean" })`,
   which turns every series of query `A` into a row — its labels as columns, its shape in the column
   `trend("A")`. One row per node with a mini graph is therefore two lines:

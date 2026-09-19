@@ -121,6 +121,7 @@ export { type SqlOptions, sql } from "./query/sql.ts"
 export {
   type Calculation,
   calculateField,
+  filterByValue,
   joinByField,
   type Operand,
   organize,

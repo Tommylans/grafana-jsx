@@ -3,6 +3,7 @@ import {
   calculateField,
   col,
   Dashboard,
+  filterByValue,
   h,
   joinByField,
   organize,
@@ -30,6 +31,14 @@ describe("transformations", () => {
       },
     })
     expect(sortBy("Pod", true)).toEqual({ id: "sortBy", options: { sort: [{ field: "Pod", desc: true }] } })
+    expect(filterByValue("type")).toEqual({
+      id: "filterByValue",
+      options: {
+        type: "include",
+        match: "all",
+        filters: [{ fieldName: "type", config: { id: "isNotNull", options: {} } }],
+      },
+    })
     expect(timeSeriesTable({ A: "mean", B: "lastNotNull" })).toEqual({
       id: "timeSeriesTable",
       options: { A: { stat: "mean" }, B: { stat: "lastNotNull" } },
