@@ -101,6 +101,31 @@ describe("panels", () => {
   })
 })
 
+describe("repeat", () => {
+  test("a section with repeat is a row panel that repeats; a panel repeats as many per row as its width allows", () => {
+    const { json } = renderDashboard(
+      <Dashboard file="a.json" title="A" uid="a">
+        <Section title="Node $node" repeat="node">
+          <Row>
+            <Stat title="cpu" unit="percent" w={6} repeat="node" query={promql(PROM, "up")} />
+          </Row>
+        </Section>
+        <TimeSeries title="wide" unit="short" w={24} repeat="node" queries={[promql(PROM, "up")]} />
+      </Dashboard>,
+    )
+    const panels = json.panels
+    if (!Array.isArray(panels)) throw new Error("no panels")
+    const repeats = panels.map((p) =>
+      typeof p === "object" && p && !Array.isArray(p) ? [p.type, p.repeat, p.repeatDirection, p.maxPerRow] : null,
+    )
+    expect(repeats).toEqual([
+      ["row", "node", undefined, undefined],
+      ["stat", "node", "h", 4],
+      ["timeseries", "node", "h", 1],
+    ])
+  })
+})
+
 describe("sections", () => {
   test("a section is a row panel one line high, its children below it, ids and y in reading order", () => {
     const { json } = renderDashboard(

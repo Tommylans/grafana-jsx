@@ -28,6 +28,7 @@ const sectionHead = (section: SectionNode, id: number, y: number): PanelJson => 
   fieldConfig: { defaults: {}, overrides: [] },
   collapsed: false,
   panels: [],
+  ...(section.repeat === undefined ? {} : { repeat: section.repeat }),
 })
 
 type Cursor = { id: number; y: number }

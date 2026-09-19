@@ -18,6 +18,10 @@ export type PanelJson = {
   targets?: Json[]
   transformations?: Json[]
   description?: string
+  /** One copy per value of the dashboard variable; a row panel repeats everything under it. */
+  repeat?: string
+  repeatDirection?: "h"
+  maxPerRow?: number
   /** Only on Grafana's row panel (`type: "row"`), the header a `<Section>` renders to. */
   collapsed?: boolean
   panels?: Json[]
@@ -33,7 +37,7 @@ export type PanelNode = {
 /** Panels side by side; their widths add up to at most the grid width. */
 export type RowNode = { kind: "row"; panels: PanelNode[] }
 /** A titled header with the rows under it: Grafana's row panel, which the reader can fold. */
-export type SectionNode = { kind: "section"; title: string; children: (PanelNode | RowNode)[] }
+export type SectionNode = { kind: "section"; title: string; repeat?: string; children: (PanelNode | RowNode)[] }
 export type DashboardNode = {
   kind: "dashboard"
   file: string

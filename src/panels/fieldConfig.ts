@@ -1,5 +1,6 @@
 // What every panel component shares: the common props, the JSON head of a panel, the row/panel
 // node builders, and the small helpers for colors, columns and links.
+import { GRID } from "../core/layout.ts"
 import type { Json, JsonObject, PanelJson, PanelNode } from "../core/node.ts"
 import type { Datasource, Target } from "../query/datasource.ts"
 
@@ -11,6 +12,8 @@ export type Common = {
   /** The name every series shows as, Grafana's `displayName` template: `${__field.labels.pod}` names a
    * series after a label, which is how a series gets its name when a datasource ignores `legendFormat`. */
   display?: string
+  /** Repeat the panel per value of this dashboard variable, side by side, as many per row as fit `w`. */
+  repeat?: string
 }
 
 /** One threshold step: `value: null` is the base color below every other step. */
@@ -181,11 +184,19 @@ export const head = (
 })
 
 /** Sets `description` and the series `display` name only when there is one, keeping the JSON free of empty keys. */
-export const described = (json: PanelJson, description: string | undefined, display?: string): PanelJson => {
+export const described = (
+  json: PanelJson,
+  description: string | undefined,
+  display?: string,
+  repeat?: { variable: string; w: number },
+): PanelJson => {
   const out = description ? { ...json, description } : json
-  if (display === undefined) return out
-  return {
-    ...out,
-    fieldConfig: { ...out.fieldConfig, defaults: { ...out.fieldConfig.defaults, displayName: display } },
-  }
+  const named =
+    display === undefined
+      ? out
+      : { ...out, fieldConfig: { ...out.fieldConfig, defaults: { ...out.fieldConfig.defaults, displayName: display } } }
+  // Grafana lays repeated panels out itself: `maxPerRow` copies side by side, then the next line.
+  return repeat
+    ? { ...named, repeat: repeat.variable, repeatDirection: "h", maxPerRow: Math.max(1, Math.floor(GRID / repeat.w)) }
+    : named
 }

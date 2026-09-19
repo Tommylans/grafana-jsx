@@ -20,6 +20,7 @@ export const Stat = ({
   title,
   description,
   display,
+  repeat,
   w = 4,
   h = 4,
   query,
@@ -53,5 +54,6 @@ export const Stat = ({
       },
       description,
       display,
+      repeat === undefined ? undefined : { variable: repeat, w },
     )
   })

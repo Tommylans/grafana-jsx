@@ -23,6 +23,7 @@ export const BarGauge = ({
   title,
   description,
   display,
+  repeat,
   w = 12,
   h = 9,
   query,
@@ -60,5 +61,6 @@ export const BarGauge = ({
       },
       description,
       display,
+      repeat === undefined ? undefined : { variable: repeat, w },
     )
   })

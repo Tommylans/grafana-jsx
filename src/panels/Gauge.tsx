@@ -19,6 +19,7 @@ export const Gauge = ({
   title,
   description,
   display,
+  repeat,
   w = 4,
   h = 5,
   query,
@@ -55,5 +56,6 @@ export const Gauge = ({
       },
       description,
       display,
+      repeat === undefined ? undefined : { variable: repeat, w },
     ),
   )

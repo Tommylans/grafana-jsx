@@ -71,10 +71,21 @@ export const Dashboard = ({
 export const Row = ({ children }: { children?: Children }): Node => rowOf(children)
 
 /** A titled header over the rows under it, up to the next section: Grafana's row panel, which the
- * reader can fold. Sections do not nest. */
-export const Section = ({ title, children }: { title: string; children?: Children }): Node => ({
+ * reader can fold. Sections do not nest. With `repeat`, Grafana copies the section and everything under
+ * it once per value of that dashboard variable; the panels read the value as `$name`, and `$name` in the
+ * title tells the copies apart. */
+export const Section = ({
+  title,
+  repeat,
+  children,
+}: {
+  title: string
+  repeat?: string
+  children?: Children
+}): Node => ({
   kind: "section",
   title,
+  ...(repeat === undefined ? {} : { repeat }),
   children: stacked(children, "a section").map((node) => {
     if (node.kind === "section")
       throw new Error(`section "${title}" holds section "${node.title}": sections do not nest`)

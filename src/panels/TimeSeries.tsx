@@ -29,8 +29,6 @@ export type TimeSeriesProps = Common & {
   decimals?: number
   fill?: number
   lineWidth?: number
-  /** Repeat the panel per value of this dashboard variable (horizontally, three per row). */
-  repeat?: string
   /** Step shape, drawn through gaps: for series that only get a point when something changes. */
   step?: boolean
   /** Draw a dot on every point: for sparse series where a line alone hides that the points are few. */
@@ -90,7 +88,7 @@ export const TimeSeries = ({
     if (min !== undefined) defaults.min = min
     if (max !== undefined) defaults.max = max
     if (steps) defaults.thresholds = thresholds(steps)
-    const json = described(
+    return described(
       {
         ...head("timeseries", title, id, x, y, w, h, datasourceOf(queries)),
         ...(interval ? { interval } : {}),
@@ -108,6 +106,6 @@ export const TimeSeries = ({
       },
       description,
       display,
+      repeat === undefined ? undefined : { variable: repeat, w },
     )
-    return repeat ? { ...json, repeat, repeatDirection: "h", maxPerRow: 3 } : json
   })
