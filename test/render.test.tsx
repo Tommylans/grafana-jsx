@@ -158,6 +158,39 @@ describe("sections", () => {
     const head = panels[1]
     expect(head && typeof head === "object" && !Array.isArray(head) ? head.collapsed : null).toBe(false)
   })
+  test("a collapsed section carries its panels inside the row, and the next section follows one line below", () => {
+    const { json } = renderDashboard(
+      <Dashboard file="a.json" title="A" uid="a">
+        <Section title="Folded" collapsed>
+          <Row>
+            {stat("one")}
+            {stat("two")}
+          </Row>
+        </Section>
+        <Section title="Open">{stat("three")}</Section>
+      </Dashboard>,
+    )
+    const panels = json.panels
+    if (!Array.isArray(panels)) throw new Error("no panels")
+    expect(
+      panels.map((p) => (typeof p === "object" && p && !Array.isArray(p) ? [p.id, p.type, p.title, p.gridPos] : null)),
+    ).toEqual([
+      [1, "row", "Folded", { h: 1, w: 24, x: 0, y: 0 }],
+      [4, "row", "Open", { h: 1, w: 24, x: 0, y: 1 }],
+      [5, "stat", "three", { h: 4, w: 4, x: 0, y: 2 }],
+    ])
+    const folded = panels[0]
+    const held = folded && typeof folded === "object" && !Array.isArray(folded) ? folded.panels : null
+    expect(folded && typeof folded === "object" && !Array.isArray(folded) ? folded.collapsed : null).toBe(true)
+    expect(
+      Array.isArray(held)
+        ? held.map((p) => (typeof p === "object" && p && !Array.isArray(p) ? [p.id, p.title, p.gridPos] : null))
+        : null,
+    ).toEqual([
+      [2, "one", { h: 4, w: 4, x: 0, y: 1 }],
+      [3, "two", { h: 4, w: 4, x: 4, y: 1 }],
+    ])
+  })
   test("sections do not nest", () => {
     expect(() =>
       renderDashboard(

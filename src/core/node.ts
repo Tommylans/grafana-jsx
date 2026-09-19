@@ -37,7 +37,13 @@ export type PanelNode = {
 /** Panels side by side; their widths add up to at most the grid width. */
 export type RowNode = { kind: "row"; panels: PanelNode[] }
 /** A titled header with the rows under it: Grafana's row panel, which the reader can fold. */
-export type SectionNode = { kind: "section"; title: string; repeat?: string; children: (PanelNode | RowNode)[] }
+export type SectionNode = {
+  kind: "section"
+  title: string
+  repeat?: string
+  collapsed?: boolean
+  children: (PanelNode | RowNode)[]
+}
 export type DashboardNode = {
   kind: "dashboard"
   file: string
