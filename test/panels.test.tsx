@@ -266,9 +266,11 @@ describe("data links", () => {
       url: "/d/overview",
       targetBlank: false,
     })
-    expect(linkToValue("Run", "https://example.test", "/app/runs")).toEqual([
-      { title: "Run", url: "https://example.test/app/runs/${__value.raw}", targetBlank: true },
-    ])
+    expect(linkToValue("Run", "https://example.test", "/app/runs")).toEqual({
+      title: "Run",
+      url: "https://example.test/app/runs/${__value.raw}",
+      targetBlank: true,
+    })
   })
 
   test("links on a panel land in the field defaults, links on a column in that column's override", () => {

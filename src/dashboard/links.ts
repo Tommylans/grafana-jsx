@@ -80,6 +80,8 @@ export const linkTo = (
 
 /** A data link to a URL outside Grafana with the cell's own value appended: the id column of a table
  * that opens that run, that session, that ticket. */
-export const linkToValue = (title: string, base: string, path: string): DataLink[] => [
-  { title, url: `${base}${path}/${VALUE}`, targetBlank: true },
-]
+export const linkToValue = (title: string, base: string, path: string): DataLink => ({
+  title,
+  url: `${base}${path}/${VALUE}`,
+  targetBlank: true,
+})
