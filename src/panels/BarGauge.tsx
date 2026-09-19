@@ -1,6 +1,6 @@
 import type { JsonObject, Node } from "../core/node.ts"
 import type { Target } from "../query/datasource.ts"
-import { type Common, head, panel, type Step, thresholds, withCommon } from "./fieldConfig.ts"
+import { byName, type Colors, type Common, head, panel, type Step, thresholds, withCommon } from "./fieldConfig.ts"
 
 export type { Step }
 export type BarGaugeProps = Common & {
@@ -11,6 +11,8 @@ export type BarGaugeProps = Common & {
   /** Color by threshold, or one fixed `color`; not both. */
   thresholds?: Step[]
   color?: string
+  /** A fixed color per series name on top of either; a named series no longer follows the thresholds. */
+  colors?: Colors
   nameOnTop?: boolean
 }
 
@@ -34,6 +36,7 @@ export const BarGauge = ({
   max,
   thresholds: steps,
   color,
+  colors = [],
   nameOnTop = false,
 }: BarGaugeProps): Node =>
   panel(w, h, (id, x, y) => {
@@ -49,7 +52,7 @@ export const BarGauge = ({
     return withCommon(
       {
         ...head("bargauge", title, id, x, y, w, h, query.datasource),
-        fieldConfig: { defaults, overrides: [] },
+        fieldConfig: { defaults, overrides: byName(colors) },
         options: {
           orientation: "horizontal",
           displayMode: "gradient",

@@ -130,6 +130,23 @@ describe("BarGauge", () => {
     expect(prom?.options).toMatchObject({ reduceOptions: { values: false } })
     expect(lokiTop?.options).toMatchObject({ reduceOptions: { values: true } })
   })
+
+  test("pins a color per series name", () => {
+    const [bars] = panelsOf(
+      <Dashboard file="b.json" title="B" uid="b">
+        <BarGauge title="pools" query={up} unit="short" color="blue" colors={[["cx", "green"]]} />
+      </Dashboard>,
+    )
+    expect(bars?.fieldConfig).toMatchObject({
+      defaults: { color: { mode: "fixed", fixedColor: "blue" } },
+      overrides: [
+        {
+          matcher: { id: "byName", options: "cx" },
+          properties: [{ id: "color", value: { mode: "fixed", fixedColor: "green" } }],
+        },
+      ],
+    })
+  })
 })
 
 describe("customVariable", () => {
