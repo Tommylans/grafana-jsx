@@ -1,6 +1,6 @@
 import type { Node } from "../core/node.ts"
 import type { Target } from "../query/datasource.ts"
-import { type Common, datasourceOf, described, head, panel } from "./fieldConfig.ts"
+import { type Common, datasourceOf, head, panel, withCommon } from "./fieldConfig.ts"
 
 export type LogsProps = Common & {
   queries: Target[]
@@ -21,6 +21,9 @@ export const Logs = ({
   title,
   description,
   display,
+  repeat,
+  links,
+  transformations,
   w = 24,
   h = 12,
   queries,
@@ -32,7 +35,7 @@ export const Logs = ({
   dedup = "none",
 }: LogsProps): Node =>
   panel(w, h, (id, x, y) =>
-    described(
+    withCommon(
       {
         ...head("logs", title, id, x, y, w, h, datasourceOf(queries)),
         fieldConfig: { defaults: {}, overrides: [] },
@@ -49,7 +52,6 @@ export const Logs = ({
         },
         targets: queries.map((query) => query.json),
       },
-      description,
-      display,
+      { description, display, repeat, links, transformations, w },
     ),
   )

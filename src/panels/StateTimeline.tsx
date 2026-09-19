@@ -3,7 +3,6 @@ import type { Target } from "../query/datasource.ts"
 import {
   type Common,
   datasourceOf,
-  described,
   head,
   LEGEND_BOTTOM,
   panel,
@@ -12,6 +11,7 @@ import {
   thresholds,
   type ValueMap,
   valueMap,
+  withCommon,
 } from "./fieldConfig.ts"
 
 export type StateProps = Common & {
@@ -43,6 +43,9 @@ export const StateTimeline = ({
   title,
   description,
   display,
+  repeat,
+  links,
+  transformations,
   w = 24,
   h = 8,
   queries,
@@ -53,7 +56,7 @@ export const StateTimeline = ({
   rowHeight = 0.9,
 }: StateProps): Node =>
   panel(w, h, (id, x, y) =>
-    described(
+    withCommon(
       {
         ...head("state-timeline", title, id, x, y, w, h, datasourceOf(queries)),
         fieldConfig: { defaults: stateDefaults(values, steps, unit), overrides: [] },
@@ -67,7 +70,6 @@ export const StateTimeline = ({
         },
         targets: queries.map((query) => query.json),
       },
-      description,
-      display,
+      { description, display, repeat, links, transformations, w },
     ),
   )

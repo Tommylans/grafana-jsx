@@ -1,6 +1,6 @@
 import type { JsonObject, Node } from "../core/node.ts"
 import type { Target } from "../query/datasource.ts"
-import { type Common, described, head, panel, type Step, thresholds } from "./fieldConfig.ts"
+import { type Common, head, panel, type Step, thresholds, withCommon } from "./fieldConfig.ts"
 
 export type StatProps = Common & {
   query: Target
@@ -21,6 +21,8 @@ export const Stat = ({
   description,
   display,
   repeat,
+  links,
+  transformations,
   w = 4,
   h = 4,
   query,
@@ -39,7 +41,7 @@ export const Stat = ({
       thresholds: thresholds(steps ?? [{ color: color ?? "text", value: null }]),
     }
     if (decimals !== undefined) defaults.decimals = decimals
-    return described(
+    return withCommon(
       {
         ...head("stat", title, id, x, y, w, h, query.datasource),
         fieldConfig: { defaults, overrides: [] },
@@ -52,8 +54,6 @@ export const Stat = ({
         },
         targets: [query.json],
       },
-      description,
-      display,
-      repeat === undefined ? undefined : { variable: repeat, w },
+      { description, display, repeat, links, transformations, w },
     )
   })

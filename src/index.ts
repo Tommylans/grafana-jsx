@@ -19,7 +19,17 @@ export { flatten } from "./core/node.ts"
 export { renderDashboard } from "./core/render.ts"
 export { BUILT_IN_ANNOTATIONS, type PromqlAnnotation, promqlAnnotation } from "./dashboard/annotations.ts"
 export { Dashboard, type DashboardProps, Row, Section } from "./dashboard/Dashboard.tsx"
-export { dashboardsByTag, type LinkOptions, link } from "./dashboard/links.ts"
+export {
+  type DataLink,
+  type DataLinkOptions,
+  dashboardsByTag,
+  fieldLabel,
+  type LinkOptions,
+  link,
+  linkTo,
+  linkToValue,
+  VALUE,
+} from "./dashboard/links.ts"
 export {
   type CustomVariable,
   customVariable,
@@ -75,20 +85,20 @@ export {
   col,
   colorsFor,
   datasourceOf,
-  described,
   head,
   LAST,
   LEGEND_BOTTOM,
-  linkTo,
   MIXED,
   P50_P90,
   PALETTE,
   panel,
+  type Shared,
   type Step,
   TOOLTIP_SINGLE,
   thresholds,
   type ValueMap,
   valueMap,
+  withCommon,
 } from "./panels/fieldConfig.ts"
 export { Gauge, type GaugeProps } from "./panels/Gauge.tsx"
 export { Heatmap, type HeatmapProps } from "./panels/Heatmap.tsx"
@@ -108,3 +118,15 @@ export { fieldNames, fieldValues, type LogsqlOptions, logsql } from "./query/log
 export { Expr, metric, raw, Selector } from "./query/metric.ts"
 export { type PromqlOptions, promql, RATE, refId } from "./query/promql.ts"
 export { type SqlOptions, sql } from "./query/sql.ts"
+export {
+  type Calculation,
+  calculateField,
+  joinByField,
+  type Operand,
+  organize,
+  type Reducer,
+  sortBy,
+  type Transformation,
+  timeSeriesTable,
+  trend,
+} from "./query/transforms.ts"

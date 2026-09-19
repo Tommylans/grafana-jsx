@@ -5,11 +5,11 @@ import {
   type Colors,
   type Common,
   datasourceOf,
-  described,
   head,
   panel,
   type Step,
   thresholds,
+  withCommon,
 } from "./fieldConfig.ts"
 
 /** What the legend can print per series; Grafana's reducer ids behind the short names. */
@@ -48,6 +48,9 @@ export const TimeSeries = ({
   title,
   description,
   display,
+  repeat,
+  links,
+  transformations,
   w = 12,
   h = 8,
   queries,
@@ -60,7 +63,6 @@ export const TimeSeries = ({
   decimals,
   fill,
   lineWidth,
-  repeat,
   step = false,
   points = false,
   min,
@@ -88,7 +90,7 @@ export const TimeSeries = ({
     if (min !== undefined) defaults.min = min
     if (max !== undefined) defaults.max = max
     if (steps) defaults.thresholds = thresholds(steps)
-    return described(
+    return withCommon(
       {
         ...head("timeseries", title, id, x, y, w, h, datasourceOf(queries)),
         ...(interval ? { interval } : {}),
@@ -104,8 +106,6 @@ export const TimeSeries = ({
         },
         targets: queries.map((query) => query.json),
       },
-      description,
-      display,
-      repeat === undefined ? undefined : { variable: repeat, w },
+      { description, display, repeat, links, transformations, w },
     )
   })

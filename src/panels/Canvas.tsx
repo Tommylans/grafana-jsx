@@ -1,6 +1,6 @@
 import type { Json, Node, PanelJson } from "../core/node.ts"
 import type { Target } from "../query/datasource.ts"
-import { type Common, datasourceOf, described, head, panel } from "./fieldConfig.ts"
+import { type Common, datasourceOf, head, panel, withCommon } from "./fieldConfig.ts"
 
 export type CanvasProps = Common & {
   queries: Target[]
@@ -18,6 +18,9 @@ export const Canvas = ({
   title,
   description,
   display,
+  repeat,
+  links,
+  transformations,
   w = 24,
   h = 13,
   queries,
@@ -27,7 +30,7 @@ export const Canvas = ({
   transparent = false,
 }: CanvasProps): Node =>
   panel(w, h, (id, x, y) =>
-    described(
+    withCommon(
       {
         ...head("canvas", title, id, x, y, w, h, datasourceOf(queries)),
         ...(transparent ? { transparent: true } : {}),
@@ -46,7 +49,6 @@ export const Canvas = ({
         },
         targets: queries.map((query) => query.json),
       },
-      description,
-      display,
+      { description, display, repeat, links, transformations, w },
     ),
   )

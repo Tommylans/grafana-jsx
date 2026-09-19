@@ -1,6 +1,6 @@
 import type { Node } from "../core/node.ts"
 import type { Target } from "../query/datasource.ts"
-import { type Common, described, head, LAST, panel, type Step, thresholds } from "./fieldConfig.ts"
+import { type Common, head, LAST, panel, type Step, thresholds, withCommon } from "./fieldConfig.ts"
 
 export type GaugeProps = Common & {
   query: Target
@@ -20,6 +20,8 @@ export const Gauge = ({
   description,
   display,
   repeat,
+  links,
+  transformations,
   w = 4,
   h = 5,
   query,
@@ -31,7 +33,7 @@ export const Gauge = ({
   labels = false,
 }: GaugeProps): Node =>
   panel(w, h, (id, x, y) =>
-    described(
+    withCommon(
       {
         ...head("gauge", title, id, x, y, w, h, query.datasource),
         fieldConfig: {
@@ -54,8 +56,6 @@ export const Gauge = ({
         },
         targets: [query.json],
       },
-      description,
-      display,
-      repeat === undefined ? undefined : { variable: repeat, w },
+      { description, display, repeat, links, transformations, w },
     ),
   )

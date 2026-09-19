@@ -1,6 +1,6 @@
 import type { Node } from "../core/node.ts"
 import type { Target } from "../query/datasource.ts"
-import { byName, type Colors, type Common, datasourceOf, described, head, LAST, panel } from "./fieldConfig.ts"
+import { byName, type Colors, type Common, datasourceOf, head, LAST, panel, withCommon } from "./fieldConfig.ts"
 
 export type PieChartProps = Common & {
   queries: Target[]
@@ -18,6 +18,9 @@ export const PieChart = ({
   title,
   description,
   display,
+  repeat,
+  links,
+  transformations,
   w = 8,
   h = 8,
   queries,
@@ -28,7 +31,7 @@ export const PieChart = ({
   legend = "right",
 }: PieChartProps): Node =>
   panel(w, h, (id, x, y) =>
-    described(
+    withCommon(
       {
         ...head("piechart", title, id, x, y, w, h, datasourceOf(queries)),
         fieldConfig: { defaults: { unit, color: { mode: "palette-classic" } }, overrides: byName(colors) },
@@ -41,7 +44,6 @@ export const PieChart = ({
         },
         targets: queries.map((query) => query.json),
       },
-      description,
-      display,
+      { description, display, repeat, links, transformations, w },
     ),
   )
