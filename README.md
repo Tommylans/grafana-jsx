@@ -65,7 +65,8 @@ component claims (add hand-written ones to `keep`).
   100, thresholds })` is a bar behind the number, `cell: "background"` or `"text"` color the cell, and
   `values` maps exact values to a text and color (the key `null` is the missing value: `{ null: { color: "transparent" } }` keeps an empty colored cell blank).
   `cell: "sparkline"` draws a whole series inside one cell, which is what `timeSeriesTable` (below)
-  puts there; it colors itself, so it is the one cell that needs no thresholds.
+  puts there; it colors itself, so it is the one cell that needs no thresholds, and it wants
+  `rowHeight="md"` or `"lg"` — in a small row the line is a few pixels tall and says nothing.
 - **Transformations** — typed, and on every panel rather than only the table: `joinByField(field)`,
   `organize({ exclude, rename, order })`, `sortBy(field, desc)`, `calculateField(alias, { left,
   operator, right })` or `calculateField(alias, { reduce, of })`, and `timeSeriesTable({ A: "mean" })`,
@@ -73,7 +74,7 @@ component claims (add hand-written ones to `keep`).
   `trend("A")`. One row per node with a mini graph is therefore two lines:
 
   ```tsx
-  <Table title="Nodes" queries={[promql(PROM, cpu, { legend: "{{node}}" })]}
+  <Table title="Nodes" rowHeight="lg" queries={[promql(PROM, cpu, { legend: "{{node}}" })]}
     transformations={[timeSeriesTable({ A: "mean" })]}
     columns={[col(trend("A"), { cell: "sparkline", width: 140 })]} />
   ```

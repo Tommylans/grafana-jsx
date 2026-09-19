@@ -68,12 +68,18 @@ describe("transformations", () => {
   test("transformations reach any panel, not only the table", () => {
     const { json } = renderDashboard(
       <Dashboard file="t.json" title="T" uid="t">
-        <Table title="rows" queries={[promql(PROM, "up")]} transformations={[timeSeriesTable({ A: "mean" })]} />
+        <Table
+          title="rows"
+          queries={[promql(PROM, "up")]}
+          rowHeight="lg"
+          transformations={[timeSeriesTable({ A: "mean" })]}
+        />
         <TimeSeries title="line" unit="short" queries={[promql(PROM, "up")]} transformations={[sortBy("Time")]} />
       </Dashboard>,
     )
     const panels = json.panels
     if (!Array.isArray(panels)) throw new Error("no panels")
+    expect(panels[0]).toMatchObject({ options: { cellHeight: "lg" } })
     expect(panels.map((p) => (typeof p === "object" && p && !Array.isArray(p) ? p.transformations : null))).toEqual([
       [{ id: "timeSeriesTable", options: { A: { stat: "mean" } } }],
       [{ id: "sortBy", options: { sort: [{ field: "Time", desc: false }] } }],

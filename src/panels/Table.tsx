@@ -8,6 +8,9 @@ export type TableProps = Common & {
   columns?: Json[]
   sort?: { by: string; desc?: boolean }
   filterable?: boolean
+  /** Row height. A `sparkline` cell needs `md` or `lg`: in a small row the line is a few pixels tall
+   * and says nothing. */
+  rowHeight?: "sm" | "md" | "lg"
   /** Replaces the default cell formatting entirely. */
   defaults?: JsonObject
 }
@@ -25,6 +28,7 @@ export const Table = ({
   columns = [],
   sort,
   filterable = false,
+  rowHeight = "sm",
   defaults,
 }: TableProps): Node =>
   panel(w, h, (id, x, y) =>
@@ -37,7 +41,7 @@ export const Table = ({
         },
         options: {
           showHeader: true,
-          cellHeight: "sm",
+          cellHeight: rowHeight,
           footer: { show: false },
           sortBy: sort ? [{ displayName: sort.by, desc: sort.desc ?? false }] : [],
         },
